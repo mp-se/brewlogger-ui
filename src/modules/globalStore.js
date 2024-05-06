@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { logDebug, logError, logInfo } from '@/modules/logger'
 
 export const useGlobalStore = defineStore('global', {
   state: () => {
@@ -32,7 +33,7 @@ export const useGlobalStore = defineStore('global', {
       if(process.env.VUE_APP_HOST === undefined)
         return  window.location.href
 
-      console.log("Using base URL from env", process.env.VUE_APP_HOST)
+      logDebug("globalStore.baseURL()", "Using base URL from env", process.env.VUE_APP_HOST)
       return process.env.VUE_APP_HOST
     },
     token() {

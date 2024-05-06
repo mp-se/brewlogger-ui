@@ -15,6 +15,14 @@ export function validateCurrentForm() {
   return valid
 }
 
+export const abv = (og, fg) => {
+  return Math.round((76.08 * (og - fg) / (1.775 - og)) * (fg / 0.794)*100) / 100
+}
+
+export const gravityToPlato = (sg) => {
+  return 259 - (259 / sg)
+}
+
 export function tempToF(c) {
   return (c * 1.8) + 32.0
 }

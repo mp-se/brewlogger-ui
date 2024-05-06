@@ -1,0 +1,30 @@
+{
+  "name": "brewlogger-ui",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.2",
+    "bootstrap-icons": "^1.11.3",
+    "chart.js": "^4.4.2",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-plugin-zoom": "^2.0.1",
+    "compression-webpack-plugin": "^10.0.0",
+    "core-js": "^3.8.3",
+    "date-fns": "^3.6.0",
+    "downsample": "^1.4.0",
+    "kalman-filter": "^2.3.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.2.13",
+    "vue-router": "^4.0.3"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-service": "^5.0.8",
+    "webpack-bundle-analyzer": "^4.10.1"
+  }
+}

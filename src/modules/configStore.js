@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { global, saveConfigState, getConfigChanges } from '@/modules/pinia'
+import { global, saveConfigState } from '@/modules/pinia'
+import { logDebug, logError, logInfo } from '@/modules/logger'
 
 export const useConfigStore = defineStore('config', {
     state: () => {
@@ -13,10 +14,27 @@ export const useConfigStore = defineStore('config', {
             dark_mode: false // TODO: Name used in components
         }
     },
+    getters: {
+        tempUnit() {
+            return this.temperatureFormat
+        },
+        isTempC() {
+            return this.temperatureFormat == 'C' ? true : false
+        },
+        isTempF() {
+            return this.temperatureFormat == 'F' ? true : false
+        },
+        isGravitySG() {
+            return this.gravityFormat == 'SG' ? true : false
+        },
+        isGravityP() {
+            return this.gravityFormat == 'P' ? true : false
+        },
+    },
     actions: {
         load(callback) {
             global.disabled = true
-            console.log("Fetching /api/config")
+            logDebug("configStore.load()")
             fetch(global.baseURL + 'api/config', {
                 method: "GET",
                 headers: { "Authorization": global.token },
@@ -24,7 +42,7 @@ export const useConfigStore = defineStore('config', {
             })
                 .then(res => res.json())
                 .then(json => {
-                    console.log(json)
+                    logDebug("configStore.load()", json)
                     global.disabled = false
                     this.id = json.id
                     this.temperatureFormat = json.temperatureFormat
@@ -37,13 +55,13 @@ export const useConfigStore = defineStore('config', {
                 })
                 .catch(err => {
                     global.disabled = false
-                    console.log(err)
+                    logError("configStore.load()", err)
                     callback(false)
                 })
         },
         save(callback) {
             global.disabled = true
-            console.log("Sending /api/config")
+            logDebug("configStore.save()")
 
             var data = {
                 pressureFormat: this.pressureFormat,
@@ -53,8 +71,8 @@ export const useConfigStore = defineStore('config', {
                 darkMode: this.dark_mode,
                 version: "",
             }
-          
-            console.log(data)
+
+            logDebug(data)
 
             fetch(global.baseURL + 'api/config/' + this.id, {
                 method: "PATCH",
@@ -65,18 +83,17 @@ export const useConfigStore = defineStore('config', {
                 .then(res => {
                     global.disabled = false
                     if (res.status != 200) {
-                        console.log("Sending /api/config failed", res.status)
+                        logDebug("configStore.save()", res.status)
                         callback(false)
                     }
                     else {
-                        console.log("Sending /api/config completed")
+                        logDebug("configStore.save()")
                         saveConfigState()
                         callback(true)
                     }
                 })
                 .catch(err => {
-                    console.log("Sending /api/config failed")
-                    console.log(err)
+                    logError("configStore.save()", err)
                     callback(false)
                     global.disabled = false
                 })
