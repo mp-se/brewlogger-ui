@@ -111,7 +111,7 @@ router.beforeEach((to, from) => {
   }*/
 
   if (!validateCurrentForm()) {
-    logDebug("router.beforeEach()", "Route: abort due to form not value")
+    logDebug("router.beforeEach()", "Route: abort due to form not valid")
     return false;
   }
 
@@ -153,10 +153,10 @@ const items = ref([
         label: 'Backup & Restore',
         path: '/other/backup',
       },
-      {
+      /*{
         label: 'Support',
         path: '/other/support',
-      },
+      },*/
       {
         label: 'About',
         path: '/other/about',

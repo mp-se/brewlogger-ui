@@ -68,7 +68,7 @@ const backup = ref({
 });
 
 function getBatchList(callback) {
-  fetch(global.baseURL + 'api/batch', {
+  fetch(global.baseURL + 'api/batch/', {
     method: "GET",
     headers: { "Authorization": global.token },
     signal: AbortSignal.timeout(global.fetchTimout),
@@ -88,7 +88,7 @@ function getBatchList(callback) {
 }
 
 function getDeviceList(callback) {
-  fetch(global.baseURL + 'api/device', {
+  fetch(global.baseURL + 'api/device/', {
     method: "GET",
     headers: { "Authorization": global.token },
     signal: AbortSignal.timeout(global.fetchTimout),
@@ -209,6 +209,8 @@ async function processRestore(json) {
   } else {
     global.messageSuccess = "Restore successful"
   }
+
+  // TODO: Do a full refresh of Devices and Batches after restore
 
   global.disabled = false
 }

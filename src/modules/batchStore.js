@@ -93,7 +93,7 @@ export const useBatchStore = defineStore('batchStore', {
 
             logDebug("batchStore.getBatchList()")
             global.disabled = true
-            fetch(global.baseURL + 'api/batch', {
+            fetch(global.baseURL + 'api/batch/', {
                 method: "GET",
                 headers: { "Authorization": global.token },
                 signal: AbortSignal.timeout(global.fetchTimout),

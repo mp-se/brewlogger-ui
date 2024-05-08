@@ -35,7 +35,7 @@ export const useConfigStore = defineStore('config', {
         load(callback) {
             global.disabled = true
             logDebug("configStore.load()")
-            fetch(global.baseURL + 'api/config', {
+            fetch(global.baseURL + 'api/config/', {
                 method: "GET",
                 headers: { "Authorization": global.token },
                 signal: AbortSignal.timeout(global.fetchTimout),

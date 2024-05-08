@@ -62,7 +62,7 @@ const close = (alert) => {
 }
 
 watch(disabled, () => {
-  logDebug("App.watch()")
+  logDebug("App.watch(disabled)")
 
   if (global.disabled)
     document.body.style.cursor = 'wait';

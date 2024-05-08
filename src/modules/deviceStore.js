@@ -68,7 +68,7 @@ export const useDeviceStore = defineStore('deviceStore', {
 
             logDebug("deviceStore.getDeviceList()")
             global.disabled = true
-            fetch(global.baseURL + 'api/device', {
+            fetch(global.baseURL + 'api/device/', {
                 method: "GET",
                 headers: { "Authorization": global.token },
                 signal: AbortSignal.timeout(global.fetchTimout),
@@ -208,7 +208,7 @@ export const useDeviceStore = defineStore('deviceStore', {
 
             var body = { url: url, method: method, body: body }
             logDebug("deviceStore.proxyRequest()", url, body)
-            fetch(global.baseURL + 'api/device/proxy_fetch', {
+            fetch(global.baseURL + 'api/device/proxy_fetch/', {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": global.token },
                 body: JSON.stringify(body),
@@ -234,7 +234,7 @@ export const useDeviceStore = defineStore('deviceStore', {
 
             logDebug("deviceStore.searchNetwork()", url)
             global.disabled = true
-            fetch(global.baseURL + 'api/device/mdns', {
+            fetch(global.baseURL + 'api/device/mdns/', {
                 method: "GET",
                 headers: { "Authorization": global.token },
                 signal: AbortSignal.timeout(global.fetchTimout),
