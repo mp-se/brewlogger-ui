@@ -4,7 +4,10 @@
     <p class="h3">About - Brewlogger</p>
     <hr>
     
-    <p class="fw-normal">TODO: fill in text about the project here</p>
+    <p class="fw-normal">
+      This project was created to help me develop my beer brewing projects. Its intended to manage devices and 
+      collect data from the devices for analysis and new feature development
+    </p>
 
     <p class="h4">MIT License</p>
 
