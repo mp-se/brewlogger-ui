@@ -52,7 +52,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { global } from "@/modules/pinia"
+import { batchStore, deviceStore, global } from "@/modules/pinia"
 import { logDebug, logError, logInfo } from '@/modules/logger'
 
 const progress = ref(0)
@@ -210,7 +210,21 @@ async function processRestore(json) {
     global.messageSuccess = "Restore successful"
   }
 
-  // TODO: Do a full refresh of Devices and Batches after restore
+  deviceStore.getDeviceList((success, dl) => {
+    if (success) {
+      logInfo("BackupView.processRestore()", "Refreshed device list")
+    } else {
+      logError("BackupView.processRestore()", "Failed to refreshed device list")
+    }
+
+    batchStore.getBatchList((success, bl) => {
+      if (success) {
+        logInfo("BackupView.processRestore()", "Refreshed batch list")
+      } else {
+        logError("BackupView.processRestore()", "Failed to refreshed batch list")
+      }
+    })
+  })
 
   global.disabled = false
 }
