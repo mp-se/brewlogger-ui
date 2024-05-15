@@ -39,14 +39,7 @@ export const useGlobalStore = defineStore('global', {
       return process.env.VUE_APP_HOST
     },
     token() {
-      if(process.env.VUE_APP_TOKEN == undefined) {
-
-        // TODO: Figure out how to store the API key in production
-
-        return "Bearer akljnv13bvi2vfo0b0bw789jlljsdf"
-      }
-
-
+      logDebug("globalStore.token()", process.env.VUE_APP_TOKEN)
       return "Bearer " + process.env.VUE_APP_TOKEN
     },
     uiVersion() {
