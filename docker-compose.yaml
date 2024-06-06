@@ -6,6 +6,8 @@ services:
     build: .
     hostname: brew_web
     restart: always
+    environment:
+     - API_KEY=akljnv13bvi2vfo0b0bw789jlljsdf
     networks:
       - brew_net
     ports:
@@ -14,7 +16,8 @@ services:
       - brew_api
       
   brew_api:
-    image: brewlogger-brew_api
+    #image: brewlogger-brew_api
+    image: mpse2/brewlogger-api
     hostname: brew_api
     restart: always
     networks:
