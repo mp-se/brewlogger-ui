@@ -4,6 +4,7 @@ services:
   brew_web:
     #build: service-web
     build: .
+    #image: mpse2/brewlogger-web
     hostname: brew_web
     restart: always
     environment:
@@ -20,6 +21,8 @@ services:
     image: mpse2/brewlogger-api
     hostname: brew_api
     restart: always
+    ports:
+      - 8000:80
     networks:
       - brew_net
     environment:
