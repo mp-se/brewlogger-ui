@@ -18,76 +18,159 @@
     </div>
 
     <hr />
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th scope="col" class="col-sm-1">ID</th>
-          <th scope="col" class="col-sm-3">mDNS</th>
-          <th scope="col" class="col-sm-1">Chip ID</th>
-          <th scope="col" class="col-sm-1">Chip Family</th>
-          <th scope="col" class="col-sm-2">Software</th>
-          <th scope="col" class="col-sm-2">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="d in deviceList" :key="d.id">
-          <th scope="row">{{ d.id }}</th>
-          <td>{{ d.mdns != '' ? d.mdns : d.url != '' ? d.url : d.description }}</td>
-          <td>
-            <pre>{{ d.chipId }}</pre>
-          </td>
-          <td>{{ d.chipFamily }}</td>
-          <td>{{ d.software }}</td>
-          <td>
-            <router-link :to="{ name: 'device', params: { id: d.id } }">
-              <button type="button" class="btn btn-primary btn-sm">
-                <i class="bi bi-pencil-square"></i>
-              </button> </router-link
-            >&nbsp;
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              @click.prevent="deleteDevice(d.id, d.mdns)"
-            >
-              <i class="bi bi-file-x"></i></button
-            >&nbsp;
-
-            <template v-if="d.software == 'Brewpi'">
-              <router-link :to="{ name: 'device-brewpi', params: { id: d.id } }">
-                <button type="button" class="btn btn-info btn-sm">
-                  <i class="bi bi-thermometer-snow"></i>
+    <template v-if="deviceList != null">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col" class="col-sm-3">
+              <div :class="sortedClass('mdns')">
+                mDNS&nbsp;
+                <a class="icon-link icon-link-hover" @click="sortList(deviceList, 'mdns', 'str')">
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
+            <th scope="col" class="col-sm-1">
+              <div :class="sortedClass('chipId')">
+                Chip ID&nbsp;
+                <a class="icon-link icon-link-hover" @click="sortList(deviceList, 'chipId', 'str')">
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
+            <th scope="col" class="col-sm-2">
+              <div :class="sortedClass('chipFamily')">
+                Chip Family&nbsp;
+                <a
+                  class="icon-link icon-link-hover"
+                  @click="sortList(deviceList, 'chipFamily', 'str')"
+                >
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
+            <th scope="col" class="col-sm-2">
+              <div :class="sortedClass('software')">
+                Software&nbsp;
+                <a
+                  class="icon-link icon-link-hover"
+                  @click="sortList(deviceList, 'software', 'str')"
+                >
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
+            <th scope="col" class="col-sm-1">Logging</th>
+            <th scope="col" class="col-sm-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="d in deviceList" :key="d.id">
+            <td class="fs-5">{{ d.mdns != '' ? d.mdns : d.url != '' ? d.url : d.description }}</td>
+            <td class="fs-5">
+              {{ d.chipId }}
+            </td>
+            <td class="fs-5">{{ d.chipFamily }}</td>
+            <td class="fs-5">{{ d.software }}</td>
+            <td>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  v-model="d.collectLogs"
+                  type="checkbox"
+                  @click="toggleDeviceLogging(d.id)"
+                />
+              </div>
+            </td>
+            <td>
+              <router-link :to="{ name: 'device', params: { id: d.id } }">
+                <button type="button" class="btn btn-primary btn-sm" :disabled="global.disabled">
+                  <i class="bi bi-pencil-square"></i>
                 </button> </router-link
               >&nbsp;
-            </template>
-
-            <template v-if="batchStore.anyBatchesForDevice(d.chipId)">
-              <router-link :to="{ name: 'batch-list', query: { chipId: d.chipId } }">
-                <button type="button" class="btn btn-success btn-sm">
-                  <i class="bi bi-boxes"></i>
-                </button> </router-link
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                @click.prevent="deleteDevice(d.id, d.mdns)"
+                :disabled="global.disabled"
+              >
+                <i class="bi bi-file-x"></i></button
               >&nbsp;
-            </template>
 
-            <template v-if="d.url.length > 7">
-              <button @click="openUrl(d.url)" type="button" class="btn btn-secondary btn-sm">
-                <i class="bi bi-link"></i></button
-              >&nbsp;
-            </template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              <template v-if="batchStore.anyBatchesForDevice(d.chipId)">
+                <router-link :to="{ name: 'batch-list', query: { chipId: d.chipId } }">
+                  <button type="button" class="btn btn-success btn-sm" :disabled="global.disabled">
+                    <i class="bi bi-boxes"></i>
+                  </button> </router-link
+                >&nbsp;
+              </template>
 
-    <div class="row">
-      <div class="col-md-12">
-        <router-link :to="{ name: 'device', params: { id: 'new' } }">
-          <button type="button" class="btn btn-secondary">Add Device</button> </router-link
-        >&nbsp;
+              <template v-if="d.url.length > 7">
+                <button
+                  @click="openUrl(d.url)"
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  :disabled="global.disabled"
+                >
+                  <i class="bi bi-link"></i></button
+                >&nbsp;
+              </template>
+              <template v-if="devicesWithLog.includes(d.chipId, 0)">
+                <router-link :to="{ name: 'device-log', params: { id: d.chipId } }">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    :disabled="global.disabled"
+                  >
+                    <i class="bi bi-file-earmark-richtext"></i>
+                  </button>
+                </router-link>
+                &nbsp;
+              </template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <button @click="search()" type="button" class="btn btn-secondary">Search for Devices</button
-        >&nbsp;
+      <div class="row">
+        <div class="col-md-12">
+          <router-link :to="{ name: 'device', params: { id: 'new' } }">
+            <button type="button" class="btn btn-secondary" :disabled="global.disabled">
+              Add Device
+            </button> </router-link
+          >&nbsp;
+
+          <button
+            @click="search()"
+            type="button"
+            class="btn btn-secondary"
+            :disabled="global.disabled"
+          >
+            Search for Devices</button
+          >&nbsp;
+
+          <router-link :to="{ name: 'device-flash' }">
+            <button type="button" class="btn btn-secondary" :disabled="global.disabled">
+              Flash device
+            </button> </router-link
+          >&nbsp;
+
+          <router-link :to="{ name: 'device-log', params: { id: '*' } }">
+            <button type="button" class="btn btn-secondary" :disabled="global.disabled">
+              Device Logs
+            </button> </router-link
+          >&nbsp;
+        </div>
       </div>
-    </div>
+    </template>
+
+    <template v-else>
+      <div class="row gy-2">
+        <div class="col-md-12">
+          <p class="h4">Loading...</p>
+        </div>
+      </div>
+    </template>
 
     <BsModalConfirm
       :callback="confirmDeleteCallback"
@@ -114,7 +197,15 @@ import { onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Device } from '@/modules/deviceStore'
 import { global, deviceStore, batchStore } from '@/modules/pinia'
-import { logDebug } from '@/modules/logger'
+import { logDebug, logInfo, logError } from '@/modules/logger'
+import {
+  sortedIconClass,
+  setSortingDefault,
+  sortedClass,
+  sortList,
+  applySortList
+} from '@/modules/ui'
+import { detectId, detectMdns, detectPlatform, detectSoftware } from '@/modules/detect'
 
 const confirmDeleteMessage = ref(null)
 const confirmDeleteId = ref(null)
@@ -123,28 +214,65 @@ const deviceList = ref(null)
 const { updatedDeviceData, deviceListFilterSoftware } = storeToRefs(global)
 
 watch(updatedDeviceData, () => {
-  updateDeviceList()
+  filterDeviceList()
+  applySortList(deviceList.value)
 })
 
 const softwareOptions = ref([
   { label: '(All)', value: '*' },
   { label: '(Blank)', value: '' },
   { label: 'Gravitymon', value: 'Gravitymon' },
-  { label: 'Kegmon', value: 'Kegmon' },
+  { label: 'Gravitymon Gateway', value: 'Gravitymon-Gateway' },
+  { label: 'Chamber Controller', value: 'Chamber-Controller' },
+  { label: 'Kegmon', value: 'Kegmon' }
   // { label: 'Pressuremon', value: 'Pressuremon' },
-  { label: 'Brewpi', value: 'Brewpi' }
   // { label: 'iSpindel', value: 'iSpindel' }
 ])
 
 const searchOptions = ref(null)
 const searchSelected = ref('')
+const devicesWithLog = ref([])
 
 onMounted(() => {
   logDebug('DeviceListView.onMounted()')
-  updateDeviceList()
-  deviceList.value = deviceStore.deviceList
+  setSortingDefault('mdns', 'str', false)
   filterDeviceList()
+  fetchDeviceLogList()
+  applySortList(deviceList.value)
 })
+
+function fetchDeviceLogList() {
+  logDebug('DeviceListView.fetchDeviceLogList()')
+
+  devicesWithLog.value = []
+
+  global.disabled = true
+  fetch(global.baseURL + 'api/device/logs/', {
+    method: 'GET',
+    headers: { Authorization: global.token },
+    signal: AbortSignal.timeout(global.fetchTimout)
+  })
+    .then((res) => {
+      logDebug('DeviceListView.fetchDeviceLogList()', res.status)
+      if (!res.ok) throw res
+      return res.json()
+    })
+    .then((json) => {
+      json.forEach((chipId) => {
+        if (!chipId.endsWith('.log.1')) {
+          chipId = chipId.replace('.log', '')
+          devicesWithLog.value.push(chipId)
+        }
+      })
+
+      logInfo('DeviceListView.fetchDeviceLogList()', devicesWithLog.value)
+      global.disabled = false
+    })
+    .catch(() => {
+      global.disabled = false
+      logError('DeviceListView.fetchDeviceLogList()', 'Failed to fetch list of devices with logs')
+    })
+}
 
 function filterDeviceList() {
   logDebug('DeviceListView.filterDeviceList', global.deviceListFilterSoftware)
@@ -159,23 +287,30 @@ function filterDeviceList() {
   })
 }
 
-watch(deviceListFilterSoftware, async (selected) => {
-  logDebug('DeviceListView.watch(filterSoftware)', selected)
-  filterDeviceList()
-})
+async function toggleDeviceLogging(id) {
+  logDebug('DeviceListView.toggleDeviceLogging()', id)
 
-function updateDeviceList() {
-  logDebug('DeviceListView.updateDeviceList()')
+  deviceList.value.forEach((d) => {
+    if (d.id == id) {
+      logDebug('DeviceListView.toggleDeviceLogging()', 'Found Record', d)
 
-  deviceStore.getDeviceList((success, dl) => {
-    if (success) {
-      deviceList.value = dl
-      filterDeviceList()
-    } else {
-      global.messageError = 'Failed to load device list'
+      d.collectLogs = !d.collectLogs
+      deviceStore.updateDevice(d, (success) => {
+        if (success) {
+          logDebug('DeviceListView.toggleDeviceLogging()', 'Success')
+        } else {
+          global.messageError = 'Failed to load device ' + id
+        }
+      })
     }
   })
 }
+
+watch(deviceListFilterSoftware, async (selected) => {
+  logDebug('DeviceListView.watch(filterSoftware)', selected)
+  filterDeviceList()
+  applySortList(deviceList.value)
+})
 
 const confirmDeleteCallback = (result) => {
   logDebug('DeviceListView.confirmDeleteCallback()', result)
@@ -250,7 +385,7 @@ const confirmSearchCallback = (result, value) => {
       searchOptions.value.forEach((e) => {
         if (e.value == value) {
           logDebug('DeviceListView.confirmSearchCallback()', e)
-          detectDeviceType('http://' + e.name)
+          detectDeviceType('http://' + e.value)
         }
       })
     }
@@ -259,59 +394,34 @@ const confirmSearchCallback = (result, value) => {
 
 async function detectDeviceType(url) {
   logDebug('DeviceListView.detectDeviceType()', url)
+  global.disabled = true
 
   // This should detect the GravityMon, KegMon and PressureMon software
-  await fetch(url + '/api/status', {
-    method: 'GET',
-    signal: AbortSignal.timeout(global.fetchTimout)
-  })
-    .then((res) => {
-      logDebug('DeviceListView.detectDeviceType()', res.status)
-      if (!res.ok) throw res
-      return res.json()
-    })
-    .then((json) => {
-      logDebug('DeviceListView.detectDeviceType()', json)
+  try {
+    const status = await deviceStore.proxyRequestWaitable('GET', url + '/api/status', '')
+    logDebug('DeviceView.fetchConfigEspFwkV1()', status)
 
-      var device = new Device(0, '', '', '', '', '', '', url, '')
+    var device = new Device(0, '', '', '', '', '', '', url, '', false)
+    device.chipId = detectId(status)
+    device.mdns = detectMdns(status)
+    device.chipFamily = detectPlatform(status)
+    device.software = detectSoftware(status)
 
-      if (Object.prototype.hasOwnProperty.call(json, 'id')) {
-        logDebug('DeviceListView.detectDeviceType()', 'ID found', json.id)
-        device.chipId = json.id
-      }
+    if (device.chipId != '') {
+      deviceStore.addDevice(device, (success) => {
+        if (success) {
+          global.messageSuccess = 'Saved device ' + device.mdns
+        } else {
+          global.messageError = 'Failed to save device, it might already exist.'
+        }
+      })
+    } else {
+      global.messageError = 'Unable to detect device type for ' + device.mdns
+    }
+  } catch (e) {
+    global.messageError = 'Failed to fetch data from device, is it turned on ?'
+  }
 
-      if (Object.prototype.hasOwnProperty.call(json, 'mdns')) {
-        logDebug('DeviceListView.detectDeviceType()', 'mDNS found', json.mdns)
-        device.mdns = json.mdns
-      }
-
-      if (Object.prototype.hasOwnProperty.call(json, 'platform')) {
-        logDebug('DeviceListView.detectDeviceType()', 'Platform found', json.platform.split(' ')[0])
-        device.chipFamily = json.platform.split(' ')[0]
-      }
-
-      if (Object.prototype.hasOwnProperty.call(json, 'scale-raw1')) {
-        logDebug('DeviceListView.detectDeviceType()', 'Software Kegmon')
-        device.software = 'Kegmon'
-      }
-
-      // TODO: Add detection of gravitymon
-      // TODO: Add detection of pressuremon
-
-      if (device.chipId != '') {
-        deviceStore.addDevice(device, (success) => {
-          if (success) {
-            global.messageSuccess = 'Saved device ' + device.mdns
-          } else {
-            global.messageError = 'Failed to save device'
-          }
-        })
-      } else {
-        global.messageError = 'Unable to detect device type for ' + device.mdns
-      }
-    })
-    .catch((err) => {
-      logDebug('DeviceListView.detectDeviceType()', err)
-    })
+  global.disabled = false
 }
 </script>

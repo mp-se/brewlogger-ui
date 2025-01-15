@@ -51,7 +51,7 @@
             >
             </BsInputText>
           </div>
-          <div class="col-md-12">
+          <div class="col-md-8">
             <BsInputRadio
               v-model="device.chipFamily"
               :options="chipFamilyOptions"
@@ -60,13 +60,24 @@
               :disabled="global.disabled"
             ></BsInputRadio>
           </div>
+
+          <div class="col-md-4">
+            <BsInputSwitch
+              v-model="device.collectLogs"
+              label="Collect logs"
+              help=""
+              :disabled="global.disabled"
+            >
+            </BsInputSwitch>
+          </div>
+
           <div class="col-md-12">
             <BsInputRadio
               v-model="device.software"
               :options="softwareOptions"
               label="Software"
               help=""
-              :disabled="global.disabled || device.chipId == '000000'"
+              :disabled="global.disabled"
             ></BsInputRadio>
           </div>
           <div class="col-md-12" v-if="device.software == 'Gravitymon'">
@@ -78,11 +89,11 @@
               :disabled="disableTilt"
             ></BsInputRadio>
           </div>
-          <div class="col-md-11" v-if="device.software != 'Brewpi'">
+          <div class="col-md-11">
             <BsInputText v-model="device.config" label="Configuration" width="11" help="" disabled>
             </BsInputText>
           </div>
-          <div class="col-md-1" v-if="device.software != 'Brewpi'">
+          <div class="col-md-1">
             <BsInputBase label="&nbsp;">
               <button
                 type="button"
@@ -156,14 +167,6 @@
               :disabled="global.disabled || device.config == ''"
             />&nbsp;
 
-            <template v-if="device.software == 'Gravitymon' && !isNew()">
-              <router-link :to="{ name: 'device-gravity' }">
-                <button type="button" class="btn btn-secondary w-2" :disabled="global.disabled">
-                  Gravity formula
-                </button> </router-link
-              >&nbsp;
-            </template>
-
             <BsModalConfirm
               :callback="deleteFermentationStepsCallback"
               message="Do you reallu want to delete the fermentation steps"
@@ -208,6 +211,7 @@ import FermentationStepFragment from '@/fragments/FermentationStepFragment.vue'
 import router from '@/modules/router'
 import { logDebug, logError, logInfo } from '@/modules/logger'
 import BsInputBase from '@/components/BsInputBase.vue'
+import { detectMdns, detectPlatform, detectSoftware } from '@/modules/detect'
 
 const render = ref('')
 const device = ref(null)
@@ -229,7 +233,7 @@ const softwareOptions = ref([
   { label: 'Gravitymon', value: 'Gravitymon' },
   { label: 'Gravitymon Gateway', value: 'Gravitymon-Gateway' },
   { label: 'Kegmon', value: 'Kegmon' },
-  { label: 'Brewpi', value: 'Brewpi' }
+  { label: 'Chamber Controller', value: 'Chamber-Controller' }
   // { label: 'Pressuremon', value: 'Pressuremon' },
   // { label: 'iSpindel', value: 'iSpindel' }
 ])
@@ -304,11 +308,6 @@ onMounted(() => {
 function validateChipId() {
   logDebug('DeviceView.validateChipId()')
 
-  if (device.value.software == 'Brewpi') {
-    device.value.chipId = '000000'
-    return true
-  }
-
   const regex = new RegExp(/^([0-9,a-f]){6}$/)
 
   if (regex.test(device.value.chipId)) {
@@ -333,65 +332,41 @@ async function fetchConfigFromDevice() {
   global.disabled = true
   validateUrl()
   await fetchConfigEspFwkV1() // Applies to Kegmon 1.x and Gravitymon 2.x
-  // TODO: Validate fetch from old Gravitymon 1.x and Kegmon 0.x
-  // TODO: Validate fetch from BrewPi
   global.disabled = false
 }
 
-async function proxyRequest(url, header) {
-  var body = { url: url, method: 'GET', body: '', header: header }
-  logDebug('DeviceView.proxyRequest()', body)
-
-  const res = await fetch(global.baseURL + 'api/device/proxy_fetch/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: global.token },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(20000)
-  }).catch((err) => {
-    logError('DeviceView.proxyRequest()', err)
-    throw new Error('Fetch error ' + err)
-  })
-
-  if (!res.ok) {
-    logError('BackupView.getBatchList()', res.status)
-    throw new Error('Failed to perform proxy request' + res.status)
-  }
-
-  const json = await res.json()
-  return json
-}
-
-/*
- * Fetch config from a device with API V1.x that uses /api/auth and /api/config (with auth)
- */
+// Fetch config from a device with API V1.x that uses /api/auth and /api/config (with auth)
 async function fetchConfigEspFwkV1() {
   try {
     var data = {}
 
-    const status = await proxyRequest(device.value.url + 'api/status', '')
-    logDebug('DeviceView.fetchConfigV2()', status)
+    const status = await deviceStore.proxyRequestWaitable(
+      'GET',
+      device.value.url + 'api/status',
+      ''
+    )
+    logDebug('DeviceView.fetchConfigEspFwkV1()', status)
     data.status = status
 
-    // Gravitymon, Kegmon etc
-    if (status.platform !== undefined) {
-      device.value.chipFamily = status.platform
-    }
-    if (status.mdns !== undefined) {
-      device.value.mdns = status.mdns
-    }
-
-    // Gravitymon
-    if (status.gravity_format !== undefined) {
-      device.value.software = 'Gravitymon'
-    }
+    device.value.mdns = detectMdns(status)
+    device.value.chipFamily = detectPlatform(status)
+    device.value.software = detectSoftware(status)
 
     const header = 'Authorization: Basic ' + btoa('username:password')
-    const auth = await proxyRequest(device.value.url + 'api/auth', header)
-    logDebug('DeviceView.fetchConfigV2()', auth)
+    const auth = await deviceStore.proxyRequestWaitable(
+      'GET',
+      device.value.url + 'api/auth',
+      header
+    )
+    logDebug('DeviceView.fetchConfigEspFwkV1()', auth)
 
     const header2 = 'Authorization: Bearer ' + auth.token
-    const config = await proxyRequest(device.value.url + 'api/config', header2)
-    logDebug('DeviceView.fetchConfigV2()', config)
+    const config = await deviceStore.proxyRequestWaitable(
+      'GET',
+      device.value.url + 'api/config',
+      header2
+    )
+    logDebug('DeviceView.fetchConfigEspFwkV1()', config)
     data.config = config
 
     // Gravitymon
@@ -400,15 +375,19 @@ async function fetchConfigEspFwkV1() {
     }
 
     if (device.value.software == 'Gravitymon') {
-      const format = await proxyRequest(device.value.url + 'api/format', header2)
-      logDebug('DeviceView.fetchConfigV2()', format)
+      const format = await deviceStore.proxyRequestWaitable(
+        'GET',
+        device.value.url + 'api/format',
+        header2
+      )
+      logDebug('DeviceView.fetchConfigEspFwkV1()', format)
       data.format = format
     }
 
     device.value.config = JSON.stringify(data)
     return true
   } catch (err) {
-    logError('DeviceView.fetchConfigV2()', err)
+    logError('DeviceView.fetchConfigEspFwkV1()', err)
     global.messageError = 'Error when trying to retrive data from device'
   }
 
@@ -435,20 +414,17 @@ const save = () => {
   if (isNew()) {
     // Check if a device with the current chipId already exist
     for (var i = 0; i < deviceStore.devices.length; i++) {
-      if (deviceStore.devices[i].chipId == device.value.chipId && device.value.chipId != '000000') {
+      if (deviceStore.devices[i].chipId == device.value.chipId) {
         global.messageWarning = 'A device with this chip ID already exists'
         return
       }
     }
 
-    deviceStore.addDevice(device.value, (success) => {
+    deviceStore.addDevice(device.value, (success, d) => {
       logDebug('DeviceView.addDevice()', 'Add device', success)
-
+      device.value = d
       if (success) {
-        global.messageSuccess = 'Added device'
-        deviceStore.getDeviceList((success) => {
-          logDebug('DeviceView.addDevice()', 'Refresh device list', success)
-        })
+        router.push({ name: 'device', params: { id: device.value.id } })
       } else {
         global.messageError = 'Failed to add device'
       }

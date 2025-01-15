@@ -3,13 +3,16 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { global } from '@/modules/pinia'
 import HomeView from '@/views/HomeView.vue'
 import DeviceView from '@/views/DeviceView.vue'
-import DeviceBrewpiView from '@/views/DeviceBrewpiView.vue'
+import DeviceFlashView from '@/views/DeviceFlashView.vue'
+import DeviceLogView from '@/views/DeviceLogView.vue'
 import DeviceListView from '@/views/DeviceListView.vue'
 import DeviceBatchView from '@/views/DeviceBatchView.vue'
-import DeviceGravityView from '@/views/DeviceGravityView.vue'
 import BatchView from '@/views/BatchView.vue'
 import BatchListView from '@/views/BatchListView.vue'
+import TapListView from '@/views/TapListView.vue'
+import TapPourListView from '@/views/TapPourListView.vue'
 import BatchGravityListView from '@/views/BatchGravityListView.vue'
+import BatchGravityTestView from '@/views/BatchGravityTestView.vue'
 import BatchGravityGraphView from '@/views/BatchGravityGraphView.vue'
 import BatchFermentationControlView from '@/views/BatchFermentationControlView.vue'
 import BatchPressureView from '@/views/BatchPressureView.vue'
@@ -33,24 +36,24 @@ const routes = [
     component: DeviceListView
   },
   {
+    path: '/device/log/:id',
+    name: 'device-log',
+    component: DeviceLogView
+  },
+  {
     path: '/device/:id',
     name: 'device',
     component: DeviceView
   },
   {
-    path: '/device/brewpi/:id',
-    name: 'device-brewpi',
-    component: DeviceBrewpiView
+    path: '/device/flash',
+    name: 'device-flash',
+    component: DeviceFlashView
   },
   {
     path: '/device/:id/batch',
     name: 'device-batch',
     component: DeviceBatchView
-  },
-  {
-    path: '/device/:id/gravity',
-    name: 'device-gravity',
-    component: DeviceGravityView
   },
   {
     path: '/batch',
@@ -78,9 +81,24 @@ const routes = [
     component: BatchGravityListView
   },
   {
+    path: '/batch/:id/gravity/test',
+    name: 'batch-gravity-test-list',
+    component: BatchGravityTestView
+  },
+  {
     path: '/batch/:id/pressure',
     name: 'batch-pressure',
     component: BatchPressureView
+  },
+  {
+    path: '/taplist',
+    name: 'tap-list',
+    component: TapListView
+  },
+  {
+    path: '/taplist/:id/pour',
+    name: 'tap-pour-list',
+    component: TapPourListView
   },
   {
     path: '/settings',
@@ -147,6 +165,12 @@ const items = ref([
     label: 'Batch',
     icon: 'IconGraphUpArrow',
     path: '/batch',
+    subs: []
+  },
+  {
+    label: 'Tap List',
+    icon: 'IconListUl',
+    path: '/taplist',
     subs: []
   },
   {

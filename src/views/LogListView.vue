@@ -12,15 +12,34 @@
       <table class="table table-striped">
         <thead>
           <tr>
-            <th scope="col" class="col-sm-2">Date</th>
-            <th scope="col" class="col-sm-2">Module</th>
+            <th scope="col" class="col-sm-2">
+              <div :class="sortedClass('timestamp')">
+                Date&nbsp;
+                <a
+                  class="icon-link icon-link-hover"
+                  @click="sortList(logList, 'timestamp', 'date')"
+                >
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
+            <th scope="col" class="col-sm-2">
+              <div :class="sortedClass('module')">
+                Module&nbsp;
+                <a class="icon-link icon-link-hover" @click="sortList(logList, 'module', 'str')">
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
             <th scope="col" class="col-sm-7">Message</th>
             <th scope="col" class="col-sm-1">Code</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="l in logList" :key="l.id">
-            <td scope="row">{{ l.timestamp.substring(0,10) }} {{ l.timestamp.substring(11,19) }}</td>
+            <td scope="row">
+              {{ l.timestamp.substring(0, 10) }} {{ l.timestamp.substring(11, 19) }}
+            </td>
             <td>{{ l.module }}</td>
             <td>{{ l.message }}</td>
             <td>{{ l.errorCode }}</td>
@@ -28,7 +47,6 @@
         </tbody>
       </table>
     </div>
-
   </div>
 </template>
 
@@ -36,11 +54,19 @@
 import { onMounted, ref } from 'vue'
 import { global } from '@/modules/pinia'
 import { logDebug } from '@/modules/logger'
+import {
+  sortedIconClass,
+  setSortingDefault,
+  sortedClass,
+  sortList,
+  applySortList
+} from '@/modules/ui'
 
 const logList = ref(null)
 
 onMounted(() => {
   logDebug('LogListView.onMounted()')
+  setSortingDefault('timestamp', 'date', false)
   updateLogList()
 })
 
@@ -62,11 +88,12 @@ function updateLogList() {
     })
     .then((json) => {
       logList.value = json
+      applySortList(logList.value)
       global.disabled = false
     })
     .catch(() => {
       global.disabled = false
-      global.messageError = "Failed to retrive list of system log enties"
+      global.messageError = 'Failed to retrive list of system log enties'
     })
 }
 </script>

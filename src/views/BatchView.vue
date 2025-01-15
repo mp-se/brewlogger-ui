@@ -12,15 +12,30 @@
             </BsInputText>
           </div>
           <div class="col-md-3">
-            <BsSelect v-model="batch.chipId" label="Device" :options="gravityDeviceOptions" help=""
-              :disabled="global.disabled"></BsSelect>
+            <BsSelect
+              v-model="batch.chipId"
+              label="Device"
+              :options="gravityDeviceOptions"
+              help=""
+              :disabled="global.disabled"
+            ></BsSelect>
           </div>
           <div class="col-md-3">
-            <BsSelect v-model="batch.fermentationChamber" label="Fermentation chamber"
-              :options="tempControlDeviceOptions" help="" :disabled="global.disabled"></BsSelect>
+            <BsSelect
+              v-model="batch.fermentationChamber"
+              label="Fermentation chamber"
+              :options="tempControlDeviceOptions"
+              help=""
+              :disabled="global.disabled"
+            ></BsSelect>
           </div>
           <div class="col-md-12">
-            <BsInputText v-model="batch.description" label="Description" help="" :disabled="global.disabled">
+            <BsInputText
+              v-model="batch.description"
+              label="Description"
+              help=""
+              :disabled="global.disabled"
+            >
             </BsInputText>
           </div>
           <div class="col-md-4">
@@ -28,35 +43,93 @@
             </BsInputText>
           </div>
           <div class="col-md-4">
-            <BsInputText v-model="batch.brewDate" label="Brew date" help="" :disabled="global.disabled">
+            <BsInputText
+              v-model="batch.brewDate"
+              label="Brew date"
+              help=""
+              :disabled="global.disabled"
+            >
             </BsInputText>
           </div>
           <div class="col-md-4">
-            <BsSelect v-model="batch.style" label="Style" :options="styleOptions" help="" :disabled="global.disabled">
+            <BsSelect
+              v-model="batch.style"
+              label="Style"
+              :options="styleOptions"
+              help=""
+              :disabled="global.disabled"
+            >
             </BsSelect>
           </div>
           <div class="col-md-4">
-            <BsInputRadio v-model="batch.active" :options="toggleOptions" label="Active" help=""
-              :disabled="global.disabled"></BsInputRadio>
+            <BsInputRadio
+              v-model="batch.active"
+              :options="activeOptions"
+              label="Receiving data"
+              help=""
+              :disabled="global.disabled"
+            ></BsInputRadio>
           </div>
-          <div class="col-md-8">
-            <BsSelect @change="brewfatherChanged(batch.brewfatherId)" v-model="batch.brewfatherId" label="Brewfather ID"
-              :options="brewfatherOptions" help="" :disabled="global.disabled">
+          <div class="col-md-4">
+            <BsInputRadio
+              v-model="batch.tapList"
+              :options="tapListOptions"
+              label="Tap list"
+              help=""
+              :disabled="global.disabled"
+            ></BsInputRadio>
+          </div>
+          <div class="col-md-4">
+            <BsSelect
+              @change="brewfatherChanged(batch.brewfatherId)"
+              v-model="batch.brewfatherId"
+              label="Brewfather ID"
+              :options="brewfatherOptions"
+              help=""
+              :disabled="global.disabled"
+            >
             </BsSelect>
           </div>
           <div class="col-md-4">
-            <BsInputNumber v-model="batch.abv" width="5" label="Alcohol" unit="% ABV" min="0" max="100" step="0.01"
-              help="" :disabled="global.disabled">
+            <BsInputNumber
+              v-model="batch.abv"
+              width="5"
+              label="Alcohol"
+              unit="% ABV"
+              min="0"
+              max="100"
+              step="0.01"
+              help=""
+              :disabled="global.disabled"
+            >
             </BsInputNumber>
           </div>
           <div class="col-md-4">
-            <BsInputNumber v-model="batch.ebc" width="5" label="Color" unit="EBC" min="0" max="100" step="0.1" help=""
-              :disabled="global.disabled">
+            <BsInputNumber
+              v-model="batch.ebc"
+              width="5"
+              label="Color"
+              unit="EBC"
+              min="0"
+              max="100"
+              step="0.1"
+              help=""
+              :disabled="global.disabled"
+            >
             </BsInputNumber>
           </div>
           <div class="col-md-4">
-            <BsInputNumber v-model="batch.ibu" width="5" label="Bitterness" unit="IBU" min="0" max="100" step="0.1"
-              help="" :disabled="global.disabled">
+            <BsInputNumber
+              v-model="batch.ibu"
+              width="5"
+              label="Bitterness"
+              unit="IBU"
+              min="0"
+              max="100"
+              step="0.1"
+              help=""
+              :disabled="global.disabled"
+            >
             </BsInputNumber>
           </div>
 
@@ -69,25 +142,6 @@
 
             <FermentationStepFragment :fermentationSteps="JSON.parse(batch.fermentationSteps)">
             </FermentationStepFragment>
-            <!-- 
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th scope="col" class="col-sm-1">Step</th>
-                  <th scope="col" class="col-sm-1">Temperature</th>
-                  <th scope="col" class="col-sm-1">Days</th>
-                  <th scope="col" class="col-sm-1">Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(step, index) in JSON.parse(batch.fermentationSteps)" :key="index">
-                  <th scope="row">{{ step.order + 1 }}</th>
-                  <td>{{ step.temp }}</td>
-                  <td>{{ step.days }}</td>
-                  <td>{{ step.type }}</td>
-                </tr>
-              </tbody>
-            </table>-->
           </div>
         </div>
 
@@ -96,25 +150,38 @@
             <hr />
           </div>
           <div class="col-md-12">
-            <button type="submit" class="btn btn-primary w-2" :disabled="global.disabled || !batchChanged()">
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
-                :hidden="!global.disabled"></span>
+            <button
+              type="submit"
+              class="btn btn-primary w-2"
+              :disabled="global.disabled || !batchChanged()"
+            >
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+                :hidden="!global.disabled"
+              ></span>
               <i class="bi bi-floppy"></i>
-              &nbsp;Save</button>&nbsp;
+              &nbsp;Save</button
+            >&nbsp;
             <router-link :to="{ name: 'batch-list' }">
               <button type="button" class="btn btn-secondary w-2">
                 <i class="bi bi-x-square"></i>
                 Cancel
-              </button> </router-link>&nbsp;
+              </button> </router-link
+            >&nbsp;
 
             <template v-if="batch.fermentationChamber > 0 && batch.fermentationSteps != ''">
-              <router-link :to="{
-                name: 'batch-fermentation-control',
-                params: { id: router.currentRoute.value.params.id }
-              }">
+              <router-link
+                :to="{
+                  name: 'batch-fermentation-control',
+                  params: { id: router.currentRoute.value.params.id }
+                }"
+              >
                 <button type="button" class="btn btn-secondary w-3">
                   Fermentation Control
-                </button> </router-link>&nbsp;
+                </button> </router-link
+              >&nbsp;
             </template>
           </div>
         </div>
@@ -148,12 +215,17 @@ const batchSaved = ref(null)
 const gravityDeviceOptions = ref([])
 const tempControlDeviceOptions = ref([])
 
-const toggleOptions = ref([
+const activeOptions = ref([
   { label: 'Active', value: true },
   { label: 'Closed', value: false }
 ])
 
-const brewfatherOptions = ref([{ label: '- not connected -', value: '' }])
+const tapListOptions = ref([
+  { label: 'Visible', value: true },
+  { label: 'Hidden', value: false }
+])
+
+const brewfatherOptions = ref([{ label: '- Not connected -', value: '' }])
 
 // These styles are imported from Brewfather definitions BJCP_2008 and GABF_2015
 const styleOptions = ref([
@@ -466,7 +538,7 @@ onMounted(() => {
   batch.value = null
 
   brewfatherStore.getBatchList((success) => {
-    logDebug(success)
+    logDebug('BatchView.onMounted()', success)
 
     brewfatherStore.batches.forEach((b) => {
       brewfatherOptions.value.push({
@@ -485,7 +557,7 @@ onMounted(() => {
         if (success) {
           batchSaved.value = Batch.fromJson(b.toJson())
           batch.value = b
-          logDebug(batch.value)
+          // logDebug(batch.value)
         } else {
           global.messageError = 'Failed to load batch ' + router.currentRoute.value.params.id
         }
@@ -498,47 +570,40 @@ function updateDeviceOptions() {
   logDebug('BatchView.updateDeviceOptions()')
 
   gravityDeviceOptions.value = []
+  gravityDeviceOptions.value = [{ value: '', label: '-- Disabled --' }]
   tempControlDeviceOptions.value = [{ value: 0, label: '-- Disabled --' }]
 
-  deviceStore.getDeviceList((success, dl) => {
-    if (success) {
-      for (var i = 0; i < dl.length; i++) {
-        const d = dl[i]
+  deviceStore.devices.forEach((d) => {
+    if (d.software == 'Gravitymon') {
+      var s =
+        d.mdns != ''
+          ? d.mdns
+          : d.url != ''
+            ? d.url
+            : d.description != ''
+              ? d.description
+              : d.software
 
-        if (d.software != 'Brewpi' && d.software != 'Kegmon') {
-          var s =
-            d.mdns != ''
-              ? d.mdns
-              : d.url != ''
-                ? d.url
-                : d.description != ''
-                  ? d.description
-                  : d.software
+      gravityDeviceOptions.value.push({
+        value: d.chipId,
+        label: d.chipId + ' (' + s + ')'
+      })
+    }
 
-          gravityDeviceOptions.value.push({
-            value: dl[i].chipId,
-            label: dl[i].chipId + ' (' + s + ')'
-          })
-        }
+    if (d.software == 'Chamber-Controller') {
+      s = d.mdns != '' ? d.mdns : d.url != '' ? d.url : d.description
 
-        if (d.software == 'Brewpi' || d.chipId == '000000') {
-          s = d.mdns != '' ? d.mdns : d.url != '' ? d.url : d.description
-
-          if (d.url != "") {
-            tempControlDeviceOptions.value.push({
-              value: dl[i].id,
-              label: 'Brewpi (' + s + ')'
-            })
-          }
-        }
+      if (d.url != '') {
+        tempControlDeviceOptions.value.push({
+          value: d.id,
+          label: d.software + '(' + s + ')'
+        })
       }
-
-      logDebug('BatchView.updateDeviceOptions()', gravityDeviceOptions.value)
-      logDebug('BatchView.updateDeviceOptions()', tempControlDeviceOptions.value)
-    } else {
-      global.messageError = 'Failed to load device list'
     }
   })
+
+  logDebug('BatchView.updateDeviceOptions()', gravityDeviceOptions.value)
+  logDebug('BatchView.updateDeviceOptions()', tempControlDeviceOptions.value)
 }
 
 const save = () => {
@@ -550,11 +615,16 @@ const save = () => {
   batchSaved.value = Batch.fromJson(batch.value.toJson())
 
   if (isNew()) {
-    batchStore.addBatch(batch.value, (success) => {
+    batchStore.addBatch(batch.value, (success, b) => {
       logDebug('BatchView.addBatch()', success)
+      batch.value = b
 
-      if (success) global.messageSuccess = 'Added batch'
-      else global.messageError = 'Failed to add batch'
+      if (success) {
+        logDebug('BatchView.addBatch()', 'Change to editor', success, batch.value)
+        router.push({ name: 'batch', params: { id: batch.value.id } })
+      } else {
+        global.messageError = 'Failed to add batch'
+      }
     })
   } else {
     batchStore.updateBatch(batch.value, (success) => {

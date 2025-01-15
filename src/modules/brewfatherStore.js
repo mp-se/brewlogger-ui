@@ -125,7 +125,7 @@ export const useBrewfatherStore = defineStore('brewfatherStore', {
           return res.json()
         })
         .then((json) => {
-          logDebug(json)
+          // logDebug(json)
           this.batches = []
 
           json.forEach((b) => {
@@ -138,9 +138,12 @@ export const useBrewfatherStore = defineStore('brewfatherStore', {
           global.disabled = false
 
           // Keep valid for 5 minutes
-          setTimeout(() => {
-            this.valid = false
-          }, 60 * 5)
+          setTimeout(
+            () => {
+              this.valid = false
+            },
+            60 * 5 * 1000
+          )
         })
         .catch((err) => {
           global.disabled = false

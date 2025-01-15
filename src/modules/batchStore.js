@@ -16,15 +16,19 @@ export class Batch {
     ebc,
     ibu,
     brewfatherId,
-    gravity,
     fermentationChamber,
-    fermentationSteps
+    fermentationSteps,
+    tapList,
+    gravity,
+    pressure,
+    pour
   ) {
     this.id = id === undefined ? 0 : id
     this.name = name === undefined ? '' : name
     this.description = description === undefined ? '' : description
     this.chipId = chipId === undefined ? '' : chipId
     this.active = active === undefined ? true : active
+    this.tapList = tapList === undefined ? true : tapList
     this.brewDate = brewDate === undefined ? '' : brewDate
     this.style = style === undefined ? '' : style
     this.brewer = brewer === undefined ? '' : brewer
@@ -36,8 +40,26 @@ export class Batch {
       fermentationChamber === undefined || fermentationChamber === null ? 0 : fermentationChamber
     this.fermentationSteps =
       fermentationSteps === undefined || fermentationSteps === null ? '' : fermentationSteps
+
     this.gravityCount = gravity === undefined || gravity === null ? 0 : gravity.length
     this.gravity = []
+    this.pressureCount = pressure === undefined || pressure === null ? 0 : pressure.length
+    this.pressure = []
+    this.pourCount = pour === undefined || pour === null ? 0 : pour.length
+    this.pour = []
+
+    // Sort the pour list in decending order (newest first) to extract the last reported volume for the batch, undefined if nothing is reported
+    if (pour !== undefined && pour !== null) {
+      pour = pour.filter((p) => {
+        return p.active
+      })
+      pour.sort((a, b) => Date.parse(b.created) - Date.parse(a.created))
+      // logDebug(pour)
+      if (pour.length) {
+        this.lastPourVolume = pour[0].volume
+        this.lastPourMaxVolume = pour[0].maxVolume
+      }
+    }
   }
 
   static compare(b1, b2) {
@@ -46,6 +68,7 @@ export class Batch {
       b1.description == b2.description &&
       b1.chipId == b2.chipId &&
       b1.active == b2.active &&
+      b1.tapList == b2.tapList &&
       b1.brewDate == b2.brewDate &&
       b1.style == b2.style &&
       b1.brewer == b2.brewer &&
@@ -71,9 +94,12 @@ export class Batch {
       b.ebc,
       b.ibu,
       b.brewfatherId,
-      b.gravity,
       b.fermentationChamber,
-      b.fermentationSteps
+      b.fermentationSteps,
+      b.tapList,
+      b.gravity,
+      b.pressure,
+      b.pour
     )
   }
 
@@ -91,11 +117,16 @@ export class Batch {
       0,
       0,
       0,
-      bd.gravity,
       bd.fermentationChamber,
-      ''
+      '',
+      bd.tapList,
+      bd.gravity,
+      bd.pressure,
+      bd.pour
     )
     b.gravity = bd.gravity
+    b.pressure = bd.pressure
+    b.pour = bd.pour
     return b
   }
 
@@ -105,6 +136,7 @@ export class Batch {
       description: this.description,
       chipId: this.chipId,
       active: this.active,
+      tapList: this.tapList,
       brewDate: this.brewDate,
       style: this.style,
       brewer: this.brewer,
@@ -159,17 +191,38 @@ export class Batch {
   get brewfatherId() {
     return this._brewfatherId
   }
+  get fermentationChamber() {
+    return this._fermentationChamber
+  }
+  get fermentationSteps() {
+    return this._fermentationSteps
+  }
+  get tapList() {
+    return this._tapList
+  }
   get gravityCount() {
     return this._gravityCount
   }
   get gravity() {
     return this._gravity
   }
-  get fermentationChamber() {
-    return this._fermentationChamber
+  get pressureCount() {
+    return this._pressureCount
   }
-  get fermentationSteps() {
-    return this._fermentationSteps
+  get pressure() {
+    return this._pressure
+  }
+  get pourCount() {
+    return this._pourCount
+  }
+  get pour() {
+    return this._pour
+  }
+  get lastPourVolume() {
+    return this._lastPourVolume
+  }
+  get lastPourMaxVolume() {
+    return this._lastPourMaxVolume
   }
 
   set id(id) {
@@ -214,11 +267,32 @@ export class Batch {
   set fermentationSteps(fermentationSteps) {
     this._fermentationSteps = fermentationSteps
   }
+  set tapList(tapList) {
+    this._tapList = tapList
+  }
   set gravityCount(gravityCount) {
     this._gravityCount = gravityCount
   }
   set gravity(gravity) {
     this._gravity = gravity
+  }
+  set pressureCount(pressureCount) {
+    this._pressureCount = pressureCount
+  }
+  set pressure(pressure) {
+    this._pressure = pressure
+  }
+  set pourCount(pourCount) {
+    this._pourCount = pourCount
+  }
+  set pour(pour) {
+    this._pour = pour
+  }
+  set lastPourVolume(lastPourVolume) {
+    this._lastPourVolume = lastPourVolume
+  }
+  set lastPourMaxVolume(lastPourMaxVolume) {
+    this._lastPourMaxVolume = lastPourMaxVolume
   }
 }
 
@@ -232,10 +306,40 @@ export const useBatchStore = defineStore('batchStore', {
     }
   },
   actions: {
+    processEvent(method, id) {
+      logDebug('batchStore.processEvent()', method, id)
+      if (method == 'delete') {
+        this.batches = this.batches.filter((b) => {
+          return b.id !== id
+        })
+        logDebug('batchStore.processEvent()', 'Removed batch with', id)
+        global.updatedBatchData += 1
+      } else if (method == 'update') {
+        this.getBatch(id, (success, b) => {
+          if (success) {
+            this.batches = this.batches.filter((b) => {
+              return b.id !== id
+            })
+            this.batches.push(b)
+            logDebug('batchStore.processEvent()', 'Updated batch with', id)
+            global.updatedBatchData += 1
+          }
+        })
+      } else if (method == 'create') {
+        this.getBatch(id, (success, b) => {
+          if (success) {
+            this.batches.push(b)
+            logDebug('batchStore.processEvent()', 'Added batch with', id)
+            global.updatedBatchData += 1
+          }
+        })
+      }
+    },
     anyBatchesForDevice(chipId) {
       logDebug('batchStore.anyBatchesForDevice()')
 
       var found = false
+
       this.batches.forEach((b) => {
         if (b.chipId == chipId) found = true
       })
@@ -257,7 +361,7 @@ export const useBatchStore = defineStore('batchStore', {
           return res.json()
         })
         .then((json) => {
-          logDebug(json)
+          logDebug('batchStore.getBatchList()', json)
           this.batches = []
 
           json.forEach((b) => {
@@ -329,7 +433,7 @@ export const useBatchStore = defineStore('batchStore', {
         })
     },
     updateBatch(b, callback) {
-      // callback => (success)
+      // callback => (success, batch)
 
       logDebug('batchStore.updateBatch()', b.id, b.toJson())
       global.disabled = true
@@ -340,22 +444,24 @@ export const useBatchStore = defineStore('batchStore', {
         signal: AbortSignal.timeout(global.fetchTimout)
       })
         .then((res) => {
-          global.disabled = false
           logDebug('batchStore.updateBatch()', res.status)
-          if (res.status != 200) {
-            callback(false)
-          } else {
-            callback(true)
-          }
+          if (res.status != 200) throw res
+          return res.json()
+        })
+        .then((json) => {
+          logDebug('batchStore.updateBatch()', json)
+          global.disabled = false
+          var batch = Batch.fromJson(json)
+          callback(true, batch)
         })
         .catch((err) => {
           logError('batchStore.updateBatch()', err)
-          callback(false)
+          callback(false, {})
           global.disabled = false
         })
     },
     addBatch(b, callback) {
-      // callback => (success)
+      // callback => (success, batch)
 
       logDebug('batchStore.addBatch()', b.toJson())
       global.disabled = true
@@ -366,13 +472,15 @@ export const useBatchStore = defineStore('batchStore', {
         signal: AbortSignal.timeout(global.fetchTimout)
       })
         .then((res) => {
-          global.disabled = false
           logDebug('batchStore.addBatch()', res.status)
-          if (res.status != 201) {
-            callback(false)
-          } else {
-            callback(true)
-          }
+          if (res.status != 201) throw res
+          return res.json()
+        })
+        .then((json) => {
+          global.disabled = false
+          logDebug('batchStore.addBatch()', json)
+          var batch = Batch.fromJson(json)
+          callback(true, batch)
         })
         .catch((err) => {
           logError('batchStore.addBatch()', err)

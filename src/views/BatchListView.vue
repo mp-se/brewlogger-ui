@@ -36,71 +36,114 @@
     </div>
 
     <hr />
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th scope="col" class="col-sm-1">ID</th>
-          <th scope="col" class="col-sm-2">Name</th>
-          <th scope="col" class="col-sm-1">Brewdate</th>
-          <th scope="col" class="col-sm-1">Device</th>
-          <th scope="col" class="col-sm-1">Active</th>
-          <th scope="col" class="col-sm-1">Gravity #</th>
-          <th scope="col" class="col-sm-2">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="b in batchList" :key="b.id">
-          <th scope="row">{{ b.id }}</th>
-          <td>{{ b.name }}</td>
-          <td>{{ b.brewDate }}</td>
-          <td>
-            <pre>{{ b.chipId }}</pre>
-          </td>
-          <td>{{ b.active }}</td>
-          <td>{{ b.gravityCount }}</td>
-          <td>
-            <router-link :to="{ name: 'batch', params: { id: b.id } }">
-              <button type="button" class="btn btn-primary btn-sm">
-                <i class="bi bi-pencil-square"></i>
-              </button> </router-link
-            >&nbsp;
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              @click.prevent="deleteBatch(b.id, b.name)"
-            >
-              <i class="bi bi-file-x"></i></button
-            >&nbsp;
-            <template v-if="b.gravityCount > 0">
-              <router-link :to="{ name: 'batch-gravity-graph', params: { id: b.id } }">
-                <button type="button" class="btn btn-success btn-sm">
-                  <i class="bi bi-graph-down"></i>
+    <template v-if="batchList != null">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col" class="col-sm-2">
+              <div :class="sortedClass('name')">
+                Name&nbsp;
+                <a class="icon-link icon-link-hover" @click="sortList(batchList, 'name', 'str')">
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
+            <th scope="col" class="col-sm-2">
+              <div :class="sortedClass('brewDate')">
+                Brewdate&nbsp;
+                <a
+                  class="icon-link icon-link-hover"
+                  @click="sortList(batchList, 'brewDate', 'date')"
+                >
+                  <i :class="sortedIconClass"></i>
+                </a>
+              </div>
+            </th>
+            <th scope="col" class="col-sm-1">Active</th>
+            <th scope="col" class="col-sm-1">TapList</th>
+            <th scope="col" class="col-sm-2"># Grav / Press / Pour</th>
+            <th scope="col" class="col-sm-3">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="b in batchList" :key="b.id">
+            <td class="fs-5">{{ b.name }}</td>
+            <td class="fs-5">{{ b.brewDate }}</td>
+            <td>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  v-model="b.active"
+                  type="checkbox"
+                  @click="toggleBatchActive(b.id)"
+                />
+              </div>
+            </td>
+            <td>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  v-model="b.tapList"
+                  type="checkbox"
+                  @click="toggleBatchTapList(b.id)"
+                />
+              </div>
+            </td>
+            <td class="fs-5">{{ b.gravityCount }} / {{ b.pressureCount }} / {{ b.pourCount }}</td>
+            <td>
+              <router-link :to="{ name: 'batch', params: { id: b.id } }">
+                <button type="button" class="btn btn-primary btn-sm">
+                  <i class="bi bi-pencil-square"></i>
                 </button> </router-link
               >&nbsp;
-              <router-link :to="{ name: 'batch-gravity-list', params: { id: b.id } }">
-                <button type="button" class="btn btn-success btn-sm">
-                  <i class="bi bi-list"></i>
-                </button> </router-link
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                @click.prevent="deleteBatch(b.id, b.name)"
+              >
+                <i class="bi bi-file-x"></i></button
               >&nbsp;
-              <button @click="exportBatchJSON(b.id)" type="button" class="btn btn-info btn-sm">
-                <i class="bi bi-filetype-json"></i></button
-              >&nbsp;
-              <button @click="exportBatchCSV(b.id)" type="button" class="btn btn-info btn-sm">
-                <i class="bi bi-filetype-csv"></i></button
-              >&nbsp;
-            </template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              <template v-if="b.gravityCount > 0">
+                <router-link :to="{ name: 'batch-gravity-graph', params: { id: b.id } }">
+                  <button type="button" class="btn btn-success btn-sm">
+                    <i class="bi bi-graph-down"></i>
+                  </button> </router-link
+                >&nbsp;
+                <router-link :to="{ name: 'batch-gravity-list', params: { id: b.id } }">
+                  <button type="button" class="btn btn-success btn-sm">
+                    <i class="bi bi-list"></i>
+                  </button> </router-link
+                >&nbsp;
+                <button @click="exportBatchJSON(b.id)" type="button" class="btn btn-info btn-sm">
+                  <i class="bi bi-filetype-json"></i></button
+                >&nbsp;
+                <button @click="exportBatchCSV(b.id)" type="button" class="btn btn-info btn-sm">
+                  <i class="bi bi-filetype-csv"></i></button
+                >&nbsp;
+              </template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-    <div class="row">
-      <div class="col-md-12">
-        <router-link :to="{ name: 'batch', params: { id: 'new' } }">
-          <button type="button" class="btn btn-secondary">Add Batch</button> </router-link
-        >&nbsp;
+      <div class="row">
+        <div class="col-md-12">
+          <router-link :to="{ name: 'batch', params: { id: 'new' } }">
+            <button type="button" class="btn btn-secondary" :disabled="global.disabled">
+              Add Batch
+            </button> </router-link
+          >&nbsp;
+        </div>
       </div>
-    </div>
+    </template>
+
+    <template v-else>
+      <div class="row gy-2">
+        <div class="col-md-12">
+          <p class="h4">Loading...</p>
+        </div>
+      </div>
+    </template>
 
     <BsModalConfirm
       :callback="confirmDeleteCallback"
@@ -119,6 +162,13 @@ import { storeToRefs } from 'pinia'
 import router from '@/modules/router'
 import { download } from '@/modules/utils'
 import { logDebug, logError } from '@/modules/logger'
+import {
+  sortedIconClass,
+  setSortingDefault,
+  sortedClass,
+  sortList,
+  applySortList
+} from '@/modules/ui'
 
 const confirmDeleteMessage = ref(null)
 const confirmDeleteId = ref(null)
@@ -130,12 +180,14 @@ const { batchListFilterDevice, batchListFilterActive, batchListFilterData } = st
 const { updatedBatchData } = storeToRefs(global)
 
 watch(updatedBatchData, () => {
-  updateBatchList()
+  filterBatchList()
+  applySortList(batchList.value)
 })
 
 onMounted(() => {
   logDebug('BatchListView.onMounted()')
-  updateBatchList()
+  setSortingDefault('brewDate', 'date', false)
+
   var query = router.currentRoute.value.query
 
   if (Object.prototype.hasOwnProperty.call(query, 'chipId')) {
@@ -144,12 +196,51 @@ onMounted(() => {
   }
 
   filterBatchList()
+  applySortList(batchList.value)
 
   deviceList.value.push({ label: 'All', value: '*' })
   deviceStore.deviceList.forEach((d) => {
     deviceList.value.push({ label: d.chipId + ' (' + d.mdns + ')', value: d.chipId })
   })
 })
+
+async function toggleBatchTapList(id) {
+  logDebug('BatchListView.toggleBatchTapList()', id)
+
+  batchList.value.forEach((b) => {
+    if (b.id == id) {
+      logDebug('BatchListView.toggleBatchTapList()', 'Found Record', b)
+
+      b.tapList = !b.tapList
+      batchStore.updateBatch(b, (success) => {
+        if (success) {
+          logDebug('BatchListView.toggleBatchTapList()', 'Success')
+        } else {
+          global.messageError = 'Failed to load batch ' + id
+        }
+      })
+    }
+  })
+}
+
+async function toggleBatchActive(id) {
+  logDebug('BatchListView.toggleBatchActive()', id)
+
+  batchList.value.forEach((b) => {
+    if (b.id == id) {
+      logDebug('BatchListView.toggleBatchActive()', 'Found Record', b)
+
+      b.active = !b.active
+      batchStore.updateBatch(b, (success) => {
+        if (success) {
+          logDebug('BatchListView.toggleBatchActive()', 'Success')
+        } else {
+          global.messageError = 'Failed to load batch ' + id
+        }
+      })
+    }
+  })
+}
 
 function filterBatchList() {
   logDebug(
@@ -167,8 +258,6 @@ function filterBatchList() {
       logDebug('BatchListView.filterBatchList()', 'exclude device: ', b.id, b.chipId)
       include = false
     }
-
-    console.log(global.batchListFilterActive)
 
     if (global.batchListFilterActive) {
       if (!b.active) {
@@ -191,30 +280,20 @@ function filterBatchList() {
 watch(batchListFilterDevice, async (selected) => {
   logDebug('BatchListView.watch(filterDevice)', selected)
   filterBatchList()
+  applySortList(batchList.value)
 })
 
 watch(batchListFilterActive, async (selected) => {
   logDebug('BatchListView.watch(filterActive)', selected)
   filterBatchList()
+  applySortList(batchList.value)
 })
 
 watch(batchListFilterData, async (selected) => {
   logDebug('BatchListView.watch(filterData)', selected)
+  applySortList(batchList.value)
   filterBatchList()
 })
-
-function updateBatchList() {
-  logDebug('BatchListView.updateBatchList()')
-
-  batchStore.getBatchList((success, bl) => {
-    if (success) {
-      batchList.value = bl
-      filterBatchList()
-    } else {
-      global.messageError = 'Failed to load batch list'
-    }
-  })
-}
 
 const confirmDeleteCallback = (result) => {
   logDebug('BatchListView.confirmDeleteCallback()', result)
@@ -261,7 +340,8 @@ function exportBatchCSV(id) {
   getBatch(id, (success, b) => {
     if (success) {
       logDebug('BatchListView.exportBatchCSV()', 'Collected batch')
-      var s = 'Name,Created,Temperature,Gravity,Angle,Battery,RSSI,CorrGravity,RunTime\n'
+      var s =
+        'Name,Created,Temperature,Gravity,Angle,Battery,RSSI,CorrGravity,RunTime,ChamberTemperature,BeerTemperature\n'
       b.gravity.forEach((g) => {
         s +=
           b.name +
@@ -281,6 +361,10 @@ function exportBatchCSV(id) {
           g.corrGravity +
           ',' +
           g.runTime +
+          ',' +
+          g.chamberTemperature +
+          ',' +
+          g.beerTemperature +
           '\n'
       })
 

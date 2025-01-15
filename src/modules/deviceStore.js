@@ -13,8 +13,7 @@ export class Device {
     bleColor,
     url,
     description,
-    gravityFormula,
-    gravityPoly
+    collectLogs
   ) {
     this.id = id === undefined ? 0 : id
     this.chipId = chipId === undefined ? '' : chipId
@@ -25,8 +24,7 @@ export class Device {
     this.bleColor = bleColor === undefined ? '' : bleColor
     this.description = description === undefined ? '' : description
     this.url = url === undefined ? '' : url
-    this.gravityFormula = gravityFormula === undefined ? '' : gravityFormula
-    this.gravityPoly = gravityPoly === undefined ? '' : gravityPoly
+    this.collectLogs = collectLogs === undefined ? '' : collectLogs
 
     if (this.url === 'http://' || this.url === 'https://') this.url = ''
   }
@@ -41,8 +39,7 @@ export class Device {
       d1.bleColor == d2.bleColor &&
       d1.url == d2.url &&
       d1.description == d2.description &&
-      d1.gravityFormula == d2.gravityFormula &&
-      d1.gravityPoly == d2.gravityPoly
+      d1.collectLogs == d2.collectLogs
     )
   }
 
@@ -57,8 +54,7 @@ export class Device {
       d.bleColor,
       d.url,
       d.description,
-      d.gravityFormula,
-      d.gravityPoly
+      d.collectLogs
     )
   }
 
@@ -72,8 +68,7 @@ export class Device {
       bleColor: this.bleColor,
       url: this.url,
       description: this.description,
-      gravityFormula: this.gravityFormula,
-      gravityPoly: this.gravityPoly,
+      collectLogs: this.collectLogs,
       fermentationSteps: []
     }
   }
@@ -105,11 +100,8 @@ export class Device {
   get description() {
     return this._description
   }
-  get gravityFormula() {
-    return this._gravityFormula
-  }
-  get gravityPoly() {
-    return this._gravityPoly
+  get collectLogs() {
+    return this._collectLogs
   }
 
   set id(id) {
@@ -139,11 +131,8 @@ export class Device {
   set description(description) {
     this._description = description
   }
-  set gravityFormula(gravityFormula) {
-    this._gravityFormula = gravityFormula
-  }
-  set gravityPoly(gravityPoly) {
-    this._gravityPoly = gravityPoly
+  set collectLogs(collectLogs) {
+    this._collectLogs = collectLogs
   }
 }
 
@@ -302,6 +291,35 @@ export const useDeviceStore = defineStore('deviceStore', {
     }
   },
   actions: {
+    processEvent(method, id) {
+      logDebug('deviceStore.processEvent()', method, id)
+      if (method == 'delete') {
+        this.devices = this.devices.filter((d) => {
+          return d.id !== id
+        })
+        logDebug('deviceStore.processEvent()', 'Removed device with', id)
+        global.updatedDeviceData += 1
+      } else if (method == 'update') {
+        this.getDevice(id, (success, d) => {
+          if (success) {
+            this.devices = this.devices.filter((d) => {
+              return d.id !== id
+            })
+            this.devices.push(d)
+            logDebug('deviceStore.processEvent()', 'Updated device with', id)
+            global.updatedDeviceData += 1
+          }
+        })
+      } else if (method == 'create') {
+        this.getDevice(id, (success, d) => {
+          if (success) {
+            this.devices.push(d)
+            logDebug('deviceStore.processEvent()', 'Added device with', id)
+            global.updatedDeviceData += 1
+          }
+        })
+      }
+    },
     getDeviceList(callback) {
       // callback => (success, devices[])
 
@@ -364,7 +382,7 @@ export const useDeviceStore = defineStore('deviceStore', {
         })
     },
     updateDevice(d, callback) {
-      // callback => (success)
+      // callback => (success, device)
 
       logDebug('deviceStore.updateDevice()', d.id, d.toJson())
       global.disabled = true
@@ -375,22 +393,24 @@ export const useDeviceStore = defineStore('deviceStore', {
         signal: AbortSignal.timeout(global.fetchTimout)
       })
         .then((res) => {
-          global.disabled = false
           logDebug('deviceStore.updateDevice()', res.status)
-          if (res.status != 200) {
-            callback(false)
-          } else {
-            callback(true)
-          }
+          if (res.status != 200) throw res
+          return res.json()
+        })
+        .then((json) => {
+          global.disabled = false
+          logDebug('deviceStore.updateDevice()', json)
+          var device = Device.fromJson(json)
+          callback(true, device)
         })
         .catch((err) => {
           logError('deviceStore.updateDevice()', err)
-          callback(false)
+          callback(false, {})
           global.disabled = false
         })
     },
     addDevice(d, callback) {
-      // callback => (success)
+      // callback => (success, device)
 
       logDebug('deviceStore.addDevice()', d.toJson())
       global.disabled = true
@@ -401,17 +421,19 @@ export const useDeviceStore = defineStore('deviceStore', {
         signal: AbortSignal.timeout(global.fetchTimout)
       })
         .then((res) => {
-          global.disabled = false
           logDebug('deviceStore.addDevice()', res.status)
-          if (res.status != 201) {
-            callback(false)
-          } else {
-            callback(true)
-          }
+          if (res.status != 201) throw res
+          return res.json()
+        })
+        .then((json) => {
+          global.disabled = false
+          logDebug('deviceStore.addDevice()', json)
+          var device = Device.fromJson(json)
+          callback(true, device)
         })
         .catch((err) => {
           logError('deviceStore.addDevice()', err)
-          callback(false)
+          callback(false, {})
           global.disabled = false
         })
     },
@@ -543,6 +565,29 @@ export const useDeviceStore = defineStore('deviceStore', {
           callback(false, null)
         })
     },
+    async proxyRequestWaitable(method, url, header) {
+      var body = { url: url, method: method, body: '', header: header }
+      logDebug('deviceStore.proxyRequestWaitable()', body)
+
+      const res = await fetch(global.baseURL + 'api/device/proxy_fetch/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: global.token },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20000)
+      }).catch((err) => {
+        logError('deviceStore.proxyRequestWaitable()', err)
+        throw new Error('Fetch error ' + err)
+      })
+
+      if (!res.ok) {
+        logError('deviceStore.proxyRequestWaitable()', res.status)
+        throw new Error('Failed to perform proxy request' + res.status)
+      }
+
+      const json = await res.json()
+      return json
+    },
+
     searchNetwork(callback) {
       // callback => (success, json_response)
       // mdns = { "type": type, "host": adresses, "name": host }
