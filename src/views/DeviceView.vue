@@ -169,7 +169,7 @@
 
             <BsModalConfirm
               :callback="deleteFermentationStepsCallback"
-              message="Do you reallu want to delete the fermentation steps"
+              message="Do you really want to delete the fermentation steps"
               id="deleteFermentationSteps"
               title="Delete"
               :disabled="global.disabled"
@@ -233,8 +233,8 @@ const softwareOptions = ref([
   { label: 'Gravitymon', value: 'Gravitymon' },
   { label: 'Gravitymon Gateway', value: 'Gravitymon-Gateway' },
   { label: 'Kegmon', value: 'Kegmon' },
-  { label: 'Chamber Controller', value: 'Chamber-Controller' }
-  // { label: 'Pressuremon', value: 'Pressuremon' },
+  { label: 'Chamber Controller', value: 'Chamber-Controller' },
+  { label: 'Pressuremon', value: 'Pressuremon' }
   // { label: 'iSpindel', value: 'iSpindel' }
 ])
 

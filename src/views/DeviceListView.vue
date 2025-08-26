@@ -79,12 +79,24 @@
                   v-model="d.collectLogs"
                   type="checkbox"
                   @click="toggleDeviceLogging(d.id)"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Collect logs from device when active"
+                  aria-label="Collect logs from device when active"
                 />
               </div>
             </td>
             <td>
               <router-link :to="{ name: 'device', params: { id: d.id } }">
-                <button type="button" class="btn btn-primary btn-sm" :disabled="global.disabled">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  :disabled="global.disabled"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Edit device"
+                  aria-label="Edit device"
+                >
                   <i class="bi bi-pencil-square"></i>
                 </button> </router-link
               >&nbsp;
@@ -93,13 +105,25 @@
                 class="btn btn-danger btn-sm"
                 @click.prevent="deleteDevice(d.id, d.mdns)"
                 :disabled="global.disabled"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Delete device"
+                aria-label="Delete device"
               >
                 <i class="bi bi-file-x"></i></button
               >&nbsp;
 
               <template v-if="batchStore.anyBatchesForDevice(d.chipId)">
                 <router-link :to="{ name: 'batch-list', query: { chipId: d.chipId } }">
-                  <button type="button" class="btn btn-success btn-sm" :disabled="global.disabled">
+                  <button
+                    type="button"
+                    class="btn btn-success btn-sm"
+                    :disabled="global.disabled"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                    title="Show batches for this device"
+                    aria-label="Show batches for this device"
+                  >
                     <i class="bi bi-boxes"></i>
                   </button> </router-link
                 >&nbsp;
@@ -111,6 +135,10 @@
                   type="button"
                   class="btn btn-secondary btn-sm"
                   :disabled="global.disabled"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Open device UI"
+                  aria-label="Open device UI"
                 >
                   <i class="bi bi-link"></i></button
                 >&nbsp;
@@ -121,6 +149,10 @@
                     type="button"
                     class="btn btn-secondary btn-sm"
                     :disabled="global.disabled"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                    title="Show device log"
+                    aria-label="Show device log"
                   >
                     <i class="bi bi-file-earmark-richtext"></i>
                   </button>
@@ -224,8 +256,8 @@ const softwareOptions = ref([
   { label: 'Gravitymon', value: 'Gravitymon' },
   { label: 'Gravitymon Gateway', value: 'Gravitymon-Gateway' },
   { label: 'Chamber Controller', value: 'Chamber-Controller' },
-  { label: 'Kegmon', value: 'Kegmon' }
-  // { label: 'Pressuremon', value: 'Pressuremon' },
+  { label: 'Kegmon', value: 'Kegmon' },
+  { label: 'Pressuremon', value: 'Pressuremon' }
   // { label: 'iSpindel', value: 'iSpindel' }
 ])
 
@@ -418,7 +450,7 @@ async function detectDeviceType(url) {
     } else {
       global.messageError = 'Unable to detect device type for ' + device.mdns
     }
-  } catch (e) {
+  } catch {
     global.messageError = 'Failed to fetch data from device, is it turned on ?'
   }
 

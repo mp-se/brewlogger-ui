@@ -14,6 +14,9 @@ import TapPourListView from '@/views/TapPourListView.vue'
 import BatchGravityListView from '@/views/BatchGravityListView.vue'
 import BatchGravityTestView from '@/views/BatchGravityTestView.vue'
 import BatchGravityGraphView from '@/views/BatchGravityGraphView.vue'
+import BatchGravityGraphCompareView from '@/views/BatchGravityGraphCompareView.vue'
+import BatchPressureGraphView from '@/views/BatchPressureGraphView.vue'
+import BatchPressureListView from '@/views/BatchPressureListView.vue'
 import BatchFermentationControlView from '@/views/BatchFermentationControlView.vue'
 import BatchPressureView from '@/views/BatchPressureView.vue'
 import AboutView from '@/views/AboutView.vue'
@@ -61,6 +64,11 @@ const routes = [
     component: BatchListView
   },
   {
+    path: '/development/compare',
+    name: 'batch-compare-view',
+    component: BatchGravityGraphCompareView
+  },
+  {
     path: '/batch/:id',
     name: 'batch',
     component: BatchView
@@ -79,6 +87,16 @@ const routes = [
     path: '/batch/:id/gravity',
     name: 'batch-gravity-list',
     component: BatchGravityListView
+  },
+  {
+    path: '/batch/:id/pressure/graph',
+    name: 'batch-pressure-graph',
+    component: BatchPressureGraphView
+  },
+  {
+    path: '/batch/:id/pressure',
+    name: 'batch-pressure-list',
+    component: BatchPressureListView
   },
   {
     path: '/batch/:id/gravity/test',
