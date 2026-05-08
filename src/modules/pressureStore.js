@@ -1,132 +1,65 @@
+// BrewLogger
+// Copyright (c) 2021-2026 Magnus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this software may be used under the terms of a
+// commercial license. See LICENSE_COMMERCIAL for details.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 import { defineStore } from 'pinia'
 import { global } from '@/modules/pinia'
 import { logDebug, logError } from '@/modules/logger'
-
-export class Pressure {
-  constructor(
-    id,
-    temperature,
-    pressure,
-    pressure1,
-    battery,
-    rssi,
-    runTime,
-    created,
-    batchId,
-    active
-  ) {
-    this.id = id === undefined ? 0 : id
-    this.temperature = temperature === undefined ? 0.0 : temperature
-    this.pressure = pressure === undefined ? 0.0 : pressure
-    this.pressure1 = pressure1 === undefined ? 0.0 : pressure1
-    this.battery = battery === undefined ? 0.0 : battery
-    this.rssi = rssi === undefined ? 0 : rssi
-    this.runTime = runTime === undefined ? 0 : runTime
-    this.created = created === undefined ? '' : created
-    this.batchId = batchId === undefined ? 0 : batchId
-    this.active = active === undefined ? true : active
-  }
-
-  static fromJson(p) {
-    return new Pressure(
-      p.id,
-      p.temperature,
-      p.pressure,
-      p.pressure1,
-      p.battery,
-      p.rssi,
-      p.runTime,
-      p.created,
-      p.batchId,
-      p.active
-    )
-  }
-
-  toJson() {
-    var j = {
-      // "id": this.id,
-      //"batchId": this.batchId,
-      temperature: this.temperature,
-      pressure: this.pressure,
-      pressure1: this.pressure1,
-      battery: this.battery,
-      rssi: this.rssi,
-      runTime: this.runTime,
-      created: this.created,
-      active: this.active
-    }
-
-    return j
-  }
-
-  get id() {
-    return this._id
-  }
-  get temperature() {
-    return this._temperature
-  }
-  get pressure() {
-    return this._pressure
-  }
-  get pressure1() {
-    return this._pressure1
-  }
-  get battery() {
-    return this._battery
-  }
-  get rssi() {
-    return this._rssi
-  }
-  get runTime() {
-    return this._runTime
-  }
-  get created() {
-    return this._created
-  }
-  get batchId() {
-    return this._batchId
-  }
-  get active() {
-    return this._active
-  }
-
-  set id(id) {
-    this._id = id
-  }
-  set temperature(temperature) {
-    this._temperature = temperature
-  }
-  set pressure(pressure) {
-    this._pressure = pressure
-  }
-  set pressure1(pressure1) {
-    this._pressure1 = pressure1
-  }
-  set battery(battery) {
-    this._battery = battery
-  }
-  set rssi(rssi) {
-    this._rssi = rssi
-  }
-  set runTime(runTime) {
-    this._runTime = runTime
-  }
-  set created(created) {
-    this._created = created
-  }
-  set batchId(batchId) {
-    this._batchId = batchId
-  }
-  set active(active) {
-    this._active = active
-  }
-}
+import { Pressure } from '@/modules/classes'
 
 export const usePressureStore = defineStore('pressureStore', {
   state: () => {
     return { pressure: [] }
   },
   actions: {
+    async getLatestPressure(limit) {
+      // returns pressure[] or null
+
+      logDebug('pressureStore.getLatestPressure()', `limit=${limit}`)
+      global.disabled = true
+      try {
+        const url = new URL(global.baseURL + 'api/pressure/latest')
+        url.searchParams.append('limit', limit)
+        const res = await fetch(url.toString(), {
+          method: 'GET',
+          headers: { Authorization: global.token },
+          signal: AbortSignal.timeout(global.fetchTimout)
+        })
+        logDebug('pressureStore.getLatestPressure()', res.status)
+        if (!res.ok) throw res
+        const json = await res.json()
+        this.pressure = []
+
+        json.forEach((p) => {
+          var pressure = Pressure.fromJson(p)
+          pressure.batchName = p.batchName
+          pressure.chipIdPressure = p.chipIdPressure
+          this.pressure.push(pressure)
+        })
+
+        global.disabled = false
+        return this.pressure
+      } catch (err) {
+        global.disabled = false
+        logError('pressureStore.getLatestPressure()', err)
+        return null
+      }
+    },
     async getPressureListForBatch(id) {
       // returns pressure[] or null
 

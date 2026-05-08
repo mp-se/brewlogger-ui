@@ -1,3 +1,23 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
     <p></p>
@@ -110,29 +130,11 @@
                 />
               </div>
             </td>
-            <td class="fs-5">
-              {{
-                new Number(
-                  config.isPressurePSI
-                    ? p.pressure
-                    : config.isPressureBAR
-                      ? pressureToBAR(p.pressure)
-                      : pressureToKPA(p.pressure)
-                ).toFixed(2)
-              }}
-            </td>
-            <td class="fs-5">
-              {{
-                p.temperature > -270
-                  ? config.isTempC
-                    ? new Number(p.temperature).toFixed(2)
-                    : new Number(tempToF(p.temperature)).toFixed(2)
-                  : '-'
-              }}
-            </td>
-            <td class="fs-5">{{ new Number(p.battery).toFixed(2) }}</td>
+            <td class="fs-5">{{ getFormattedPressure(p.pressure) }}</td>
+            <td class="fs-5">{{ getFormattedTemperature(p.temperature) }}</td>
+            <td class="fs-5">{{ p.battery !== null ? new Number(p.battery).toFixed(2) : '--' }}</td>
             <td class="fs-5">{{ p.rssi }}</td>
-            <td class="fs-5">{{ new Number(p.runTime).toFixed(2) }}</td>
+            <td class="fs-5">{{ p.runTime !== null ? new Number(p.runTime).toFixed(2) : '--' }}</td>
           </tr>
         </tbody>
       </table>
@@ -153,7 +155,11 @@
 import { onMounted, ref } from 'vue'
 import { config, pressureStore, batchStore, global } from '@/modules/pinia'
 import router from '@/modules/router'
-import { tempToF, getPressureDataAnalytics, pressureToKPA, pressureToBAR } from '@/modules/utils'
+import {
+  getPressureDataAnalytics,
+  getFormattedTemperature,
+  getFormattedPressure
+} from '@/modules/utils'
 import { logDebug, logError } from '@/modules/logger'
 import {
   sortedIconClass,

@@ -1,31 +1,62 @@
-import { ref } from 'vue'
+// BrewLogger
+// Copyright (c) 2021-2026 Magnus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this software may be used under the terms of a
+// commercial license. See LICENSE_COMMERCIAL for details.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+import { ref, defineAsyncComponent } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { global } from '@/modules/pinia'
-import HomeView from '@/views/HomeView.vue'
-import DeviceView from '@/views/DeviceView.vue'
-import DeviceFlashView from '@/views/DeviceFlashView.vue'
-import DeviceLogView from '@/views/DeviceLogView.vue'
-import DeviceListView from '@/views/DeviceListView.vue'
-import DeviceBatchView from '@/views/DeviceBatchView.vue'
-import BatchView from '@/views/BatchView.vue'
-import BatchListView from '@/views/BatchListView.vue'
-import TapListView from '@/views/TapListView.vue'
-import TapPourListView from '@/views/TapPourListView.vue'
-import BatchGravityListView from '@/views/BatchGravityListView.vue'
-import BatchGravityTestView from '@/views/BatchGravityTestView.vue'
-import BatchGravityGraphView from '@/views/BatchGravityGraphView.vue'
-import BatchGravityGraphCompareView from '@/views/BatchGravityGraphCompareView.vue'
-import BatchPressureGraphView from '@/views/BatchPressureGraphView.vue'
-import BatchPressureListView from '@/views/BatchPressureListView.vue'
-import BatchFermentationControlView from '@/views/BatchFermentationControlView.vue'
-import BatchPressureView from '@/views/BatchPressureView.vue'
-import AboutView from '@/views/AboutView.vue'
-import SettingsView from '@/views/SettingsView.vue'
-import BackupView from '@/views/BackupView.vue'
-import SupportView from '@/views/SupportView.vue'
-import LogListView from '@/views/LogListView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
 import { logDebug } from '@/modules/logger'
+
+
+const HomeView = defineAsyncComponent(() => import('@/views/HomeView.vue'))
+const DeviceView = defineAsyncComponent(() => import('@/views/DeviceView.vue'))
+const DeviceFlashView = defineAsyncComponent(() => import('@/views/DeviceFlashView.vue'))
+const DeviceLogView = defineAsyncComponent(() => import('@/views/DeviceLogView.vue'))
+const DeviceListView = defineAsyncComponent(() => import('@/views/DeviceListView.vue'))
+const BatchView = defineAsyncComponent(() => import('@/views/BatchView.vue'))
+const BatchListView = defineAsyncComponent(() => import('@/views/BatchListView.vue'))
+const TapListView = defineAsyncComponent(() => import('@/views/TapListView.vue'))
+const TapPourListView = defineAsyncComponent(() => import('@/views/TapPourListView.vue'))
+const BatchGravityListView = defineAsyncComponent(() => import('@/views/BatchGravityListView.vue'))
+const BatchGravityTestView = defineAsyncComponent(() => import('@/views/BatchGravityTestView.vue'))
+const BatchGravityGraphView = defineAsyncComponent(
+  () => import('@/views/BatchGravityGraphView.vue')
+)
+const BatchGravityGraphCompareView = defineAsyncComponent(
+  () => import('@/views/BatchGravityGraphCompareView.vue')
+)
+const BatchPressureGraphView = defineAsyncComponent(
+  () => import('@/views/BatchPressureGraphView.vue')
+)
+const BatchPressureListView = defineAsyncComponent(
+  () => import('@/views/BatchPressureListView.vue')
+)
+const BatchFermentationControlView = defineAsyncComponent(
+  () => import('@/views/BatchFermentationControlView.vue')
+)
+const BatchPressureView = defineAsyncComponent(() => import('@/views/BatchPressureView.vue'))
+const AboutView = defineAsyncComponent(() => import('@/views/AboutView.vue'))
+const SettingsView = defineAsyncComponent(() => import('@/views/SettingsView.vue'))
+const BackupView = defineAsyncComponent(() => import('@/views/BackupView.vue'))
+const SupportView = defineAsyncComponent(() => import('@/views/SupportView.vue'))
+const SystemLogView = defineAsyncComponent(() => import('@/views/SystemLogView.vue'))
+const ReceiveLogView = defineAsyncComponent(() => import('@/views/ReceiveLogView.vue'))
+const NotFoundView = defineAsyncComponent(() => import('@/views/NotFoundView.vue'))
 
 const routes = [
   {
@@ -54,17 +85,12 @@ const routes = [
     component: DeviceFlashView
   },
   {
-    path: '/device/:id/batch',
-    name: 'device-batch',
-    component: DeviceBatchView
-  },
-  {
     path: '/batch',
     name: 'batch-list',
     component: BatchListView
   },
   {
-    path: '/development/compare',
+    path: '/batch/compare',
     name: 'batch-compare-view',
     component: BatchGravityGraphCompareView
   },
@@ -134,9 +160,14 @@ const routes = [
     component: SupportView
   },
   {
-    path: '/other/log',
-    name: 'log',
-    component: LogListView
+    path: '/other/system',
+    name: 'system_log',
+    component: SystemLogView
+  },
+  {
+    path: '/other/receive',
+    name: 'receive_log',
+    component: ReceiveLogView
   },
   {
     path: '/other/about',
@@ -157,14 +188,30 @@ const router = createRouter({
 
 export default router
 
-router.afterEach((to, from) => {
-  logDebug('router.afterEach()', to, from)
+/**
+ * Handles cleanup on navigation end
+ * @param {Object} globalStore - The global store instance
+ * @param {Object} to - Destination route
+ * @param {Object} from - Source route
+ */
+export const handleNavigationEnd = (globalStore, to, from) => {
+  logDebug('router.handleNavigationEnd()', to, from)
 
-  global.clearMessages()
-  global.batchChanged = false
-  global.deviceChanged = false
+  if (globalStore && typeof globalStore.clearMessages === 'function') {
+    globalStore.clearMessages()
+  }
+  if (globalStore) {
+    globalStore.batchChanged = false
+    globalStore.deviceChanged = false
+  }
   return true
+}
+
+router.afterEach((to, from) => {
+  return handleNavigationEnd(global, to, from)
 })
+
+export { routes }
 
 const items = ref([
   {
@@ -208,7 +255,11 @@ const items = ref([
       },
       {
         label: 'System log',
-        path: '/other/log'
+        path: '/other/system'
+      },
+      {
+        label: 'Receive log',
+        path: '/other/receive'
       },
       // {
       //   label: 'Support',

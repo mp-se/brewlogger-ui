@@ -1,3 +1,23 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
     <p></p>
@@ -51,9 +71,9 @@
               />
             </div>
           </td>
-          <td class="fs-5">{{ convertCL(p.pour) }}</td>
-          <td class="fs-5">{{ convertL(p.volume) }}</td>
-          <td class="fs-5">{{ convertL(p.maxVolume) }}</td>
+          <td class="fs-5">{{ getFormattedPourVolume(p.pour * 100) }}</td>
+          <td class="fs-5">{{ getFormattedVolume(p.volume) }}</td>
+          <td class="fs-5">{{ getFormattedVolume(p.maxVolume) }}</td>
         </tr>
       </tbody>
     </table>
@@ -74,12 +94,7 @@ import { onMounted, ref } from 'vue'
 import { pourStore, batchStore, config, global } from '@/modules/pinia'
 import router from '@/modules/router'
 import { logDebug, logError } from '@/modules/logger'
-import {
-  volumeLtoUSGallon,
-  volumeLtoUKGallon,
-  volumeCLtoUSOZ,
-  volumeCLtoUKOZ
-} from '@/modules/utils'
+import { getFormattedVolume, getFormattedPourVolume } from '@/modules/utils'
 import {
   sortedIconClass,
   setSortingDefault,
@@ -91,19 +106,6 @@ import {
 const pourList = ref(null)
 const forceRender = ref(0)
 const batchName = ref('')
-
-function convertCL(v) {
-  v = v * 100 // Convert to CL
-  return Number(
-    config.isVolumeMetric ? v : config.isVolumeUk ? volumeCLtoUKOZ(v) : volumeCLtoUSOZ(v)
-  ).toFixed(0)
-}
-
-function convertL(v) {
-  return Number(
-    config.isVolumeMetric ? v : config.isVolumeUk ? volumeLtoUKGallon(v) : volumeLtoUSGallon(v)
-  ).toFixed(2)
-}
 
 async function updatePour(id) {
   logDebug('TapPourListView.updatePour()', id)

@@ -1,18 +1,55 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
-  <BsInputBase :width="width" :label="label" :help="help" :badge="badge">
-    <select v-model="model" class="form-select" :disabled="disabled" v-bind="$attrs">
-      <template v-for="o in options" :key="o.value">
-        <option v-if="o.value === model" selected :value="o.value">
-          <IconWifi />{{ o.label }}
-        </option>
-        <option v-else :value="o.value">{{ o.label }}</option>
-      </template>
-    </select>
+  <BsInputBase
+    :id="id"
+    :width="width"
+    :label="label"
+    :help="help"
+    :badge="badge"
+    :error-message="errorMessage"
+  >
+    <template #default="{ id: inputId, isInvalid }">
+      <select
+        v-model="model"
+        :id="inputId"
+        class="form-select"
+        :class="{ 'is-invalid': isInvalid }"
+        :disabled="disabled"
+        v-bind="$attrs"
+      >
+        <template v-for="o in options" :key="o.value">
+          <option v-if="o.value === model" selected :value="o.value">
+            <IconWifi />{{ o.label }}
+          </option>
+          <option v-else :value="o.value">{{ o.label }}</option>
+        </template>
+      </select>
+    </template>
   </BsInputBase>
 </template>
 
 <script setup>
 import IconWifi from '@/components/IconWifi.vue'
+import BsInputBase from './BsInputBase.vue'
 /**
  * 2024-05-28 Bootstrap VueJS wrapper, Magnus Persson
  */
@@ -23,6 +60,24 @@ import IconWifi from '@/components/IconWifi.vue'
 defineOptions({
   inheritAttrs: false
 })
+
+const props = defineProps({
+  /**
+   * Optional unique ID for the input.
+   */
+  id: {
+    type: String,
+    default: undefined
+  },
+  /**
+   * Error message to display.
+   */
+  errorMessage: {
+    type: String,
+    default: ''
+  }
+})
+
 /**
  * Ref to bind value to (required).
  */

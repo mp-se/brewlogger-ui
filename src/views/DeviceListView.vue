@@ -1,45 +1,64 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
-    <div class="row">
-      <div class="col-md-8">
-        <p></p>
-        <p class="h3">Device List</p>
-      </div>
-      <div class="col-md-4">
-        <BsSelect
-          v-model="global.deviceListFilterSoftware"
-          :options="softwareOptions"
-          label="Software"
-          help=""
-          :disabled="global.disabled"
-        >
-        </BsSelect>
-      </div>
-    </div>
+    <BsPageHeader title="Device List">
+      <BsSelect
+        v-model="global.deviceListFilterSoftware"
+        :options="softwareOptions"
+        label="Software"
+        help=""
+        :disabled="global.disabled"
+      >
+      </BsSelect>
+    </BsPageHeader>
 
-    <hr />
     <template v-if="deviceList != null">
       <table class="table table-striped">
         <thead>
           <tr>
             <th scope="col" class="col-sm-3">
-              <div :class="sortedClass('mdns')">
+              <div :class="getSortedClass('mdns')">
                 mDNS&nbsp;
-                <a class="icon-link icon-link-hover" @click="sortList(deviceList, 'mdns', 'str')">
+                <a
+                  class="icon-link icon-link-hover"
+                  @click="sortList(deviceList, 'mdns', 'str')"
+                >
                   <i :class="sortedIconClass"></i>
                 </a>
               </div>
             </th>
             <th scope="col" class="col-sm-1">
-              <div :class="sortedClass('chipId')">
+              <div :class="getSortedClass('chipId')">
                 Chip ID&nbsp;
-                <a class="icon-link icon-link-hover" @click="sortList(deviceList, 'chipId', 'str')">
+                <a
+                  class="icon-link icon-link-hover"
+                  @click="sortList(deviceList, 'chipId', 'str')"
+                >
                   <i :class="sortedIconClass"></i>
                 </a>
               </div>
             </th>
             <th scope="col" class="col-sm-2">
-              <div :class="sortedClass('chipFamily')">
+              <div :class="getSortedClass('chipFamily')">
                 Chip Family&nbsp;
                 <a
                   class="icon-link icon-link-hover"
@@ -50,7 +69,7 @@
               </div>
             </th>
             <th scope="col" class="col-sm-2">
-              <div :class="sortedClass('software')">
+              <div :class="getSortedClass('software')">
                 Software&nbsp;
                 <a
                   class="icon-link icon-link-hover"
@@ -227,23 +246,21 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Device } from '@/modules/deviceStore'
+import { Device } from '@/modules/classes'
 import { global, deviceStore, batchStore } from '@/modules/pinia'
 import { logDebug, logInfo, logError } from '@/modules/logger'
-import {
-  sortedIconClass,
-  setSortingDefault,
-  sortedClass,
-  sortList,
-  applySortList
-} from '@/modules/ui'
+import { useSortableList } from '@/modules/useSortableList'
 import { detectId, detectMdns, detectPlatform, detectSoftware } from '@/modules/detect'
+import BsPageHeader from '@/components/BsPageHeader.vue'
 
 const confirmDeleteMessage = ref(null)
 const confirmDeleteId = ref(null)
 
 const deviceList = ref(null)
 const { updatedDeviceData, deviceListFilterSoftware } = storeToRefs(global)
+
+const { sortedIconClass, getSortedClass, setSortingDefault, sortList, applySortList } =
+  useSortableList('mdns', 'str', false)
 
 watch(updatedDeviceData, () => {
   filterDeviceList()
@@ -267,7 +284,6 @@ const devicesWithLog = ref([])
 
 onMounted(() => {
   logDebug('DeviceListView.onMounted()')
-  setSortingDefault('mdns', 'str', false)
   filterDeviceList()
   fetchDeviceLogList()
   applySortList(deviceList.value)

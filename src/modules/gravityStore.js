@@ -1,179 +1,65 @@
+// BrewLogger
+// Copyright (c) 2021-2026 Magnus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this software may be used under the terms of a
+// commercial license. See LICENSE_COMMERCIAL for details.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 import { defineStore } from 'pinia'
 import { global } from '@/modules/pinia'
 import { logDebug, logError } from '@/modules/logger'
-
-export class Gravity {
-  constructor(
-    id,
-    temperature,
-    gravity,
-    velocity,
-    angle,
-    battery,
-    rssi,
-    corrGravity,
-    runTime,
-    created,
-    batchId,
-    active,
-    chamberTemperature,
-    beerTemperature
-  ) {
-    this.id = id === undefined ? 0 : id
-    this.temperature = temperature === undefined ? 0.0 : temperature
-    this.gravity = gravity === undefined ? 0.0 : gravity
-    this.velocity = velocity === undefined ? 0.0 : velocity
-    this.angle = angle === undefined ? 0.0 : angle
-    this.battery = battery === undefined ? 0.0 : battery
-    this.rssi = rssi === undefined ? 0 : rssi
-    this.corrGravity = corrGravity === undefined ? 0.0 : corrGravity
-    this.runTime = runTime === undefined ? 0 : runTime
-    this.created = created === undefined ? '' : created
-    this.batchId = batchId === undefined ? 0 : batchId
-    this.active = active === undefined ? true : active
-    this.chamberTemperature =
-      chamberTemperature === undefined || chamberTemperature === null
-        ? undefined
-        : chamberTemperature
-    this.beerTemperature =
-      beerTemperature === undefined || beerTemperature === null ? undefined : beerTemperature
-  }
-
-  static fromJson(g) {
-    return new Gravity(
-      g.id,
-      g.temperature,
-      g.gravity,
-      g.velocity,
-      g.angle,
-      g.battery,
-      g.rssi,
-      g.corrGravity,
-      g.runTime,
-      g.created,
-      g.batchId,
-      g.active,
-      g.chamberTemperature,
-      g.beerTemperature
-    )
-  }
-
-  toJson() {
-    var j = {
-      // "id": this.id,
-      //"batchId": this.batchId,
-      temperature: this.temperature,
-      gravity: this.gravity,
-      velocity: this.velocity,
-      angle: this.angle,
-      battery: this.battery,
-      rssi: this.rssi,
-      corrGravity: this.corrGravity,
-      runTime: this.runTime,
-      created: this.created,
-      active: this.active
-    }
-
-    // Optional: Can be undefined or null
-    if (this.chamberTemperature !== undefined) j.chamberTemperature = this.chamberTemperature
-
-    if (this.beerTemperature !== undefined) j.beerTemperature = this.beerTemperature
-
-    return j
-  }
-
-  get id() {
-    return this._id
-  }
-  get temperature() {
-    return this._temperature
-  }
-  get gravity() {
-    return this._gravity
-  }
-  get velocity() {
-    return this._velocity
-  }
-  get angle() {
-    return this._angle
-  }
-  get battery() {
-    return this._battery
-  }
-  get rssi() {
-    return this._rssi
-  }
-  get corrGravity() {
-    return this._corrGravity
-  }
-  get runTime() {
-    return this._runTime
-  }
-  get created() {
-    return this._created
-  }
-  get batchId() {
-    return this._batchId
-  }
-  get active() {
-    return this._active
-  }
-  get chamberTemperature() {
-    return this._chamberTemperature
-  }
-  get beerTemperature() {
-    return this._beerTemperature
-  }
-
-  set id(id) {
-    this._id = id
-  }
-  set temperature(temperature) {
-    this._temperature = temperature
-  }
-  set gravity(gravity) {
-    this._gravity = gravity
-  }
-  set velocity(velocity) {
-    this._velocity = velocity
-  }
-  set angle(angle) {
-    this._angle = angle
-  }
-  set battery(battery) {
-    this._battery = battery
-  }
-  set rssi(rssi) {
-    this._rssi = rssi
-  }
-  set corrGravity(corrGravity) {
-    this._corrGravity = corrGravity
-  }
-  set runTime(runTime) {
-    this._runTime = runTime
-  }
-  set created(created) {
-    this._created = created
-  }
-  set batchId(batchId) {
-    this._batchId = batchId
-  }
-  set active(active) {
-    this._active = active
-  }
-  set chamberTemperature(chamberTemperature) {
-    this._chamberTemperature = chamberTemperature
-  }
-  set beerTemperature(beerTemperature) {
-    this._beerTemperature = beerTemperature
-  }
-}
+import { Gravity } from '@/modules/classes'
 
 export const useGravityStore = defineStore('gravityStore', {
   state: () => {
     return { gravity: [] }
   },
   actions: {
+    async getLatestGravity(limit) {
+      // returns gravity[] or null
+
+      logDebug('gravityStore.getLatestGravity()', `limit=${limit}`)
+      global.disabled = true
+      try {
+        const url = new URL(global.baseURL + 'api/gravity/latest')
+        url.searchParams.append('limit', limit)
+        const res = await fetch(url.toString(), {
+          method: 'GET',
+          headers: { Authorization: global.token },
+          signal: AbortSignal.timeout(global.fetchTimout)
+        })
+        logDebug('gravityStore.getLatestGravity()', res.status)
+        if (!res.ok) throw res
+        const json = await res.json()
+        this.gravity = []
+
+        json.forEach((g) => {
+          var gravity = Gravity.fromJson(g)
+          gravity.batchName = g.batchName
+          gravity.chipIdGravity = g.chipIdGravity
+          this.gravity.push(gravity)
+        })
+
+        global.disabled = false
+        return this.gravity
+      } catch (err) {
+        global.disabled = false
+        logError('gravityStore.getLatestGravity()', err)
+        return null
+      }
+    },
     async getGravityListForBatch(id) {
       // returns gravity[] or null
 

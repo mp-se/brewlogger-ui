@@ -1,8 +1,26 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
-    <p></p>
-    <p class="h3">Device</p>
-    <hr />
+    <BsPageHeader title="Device" />
 
     <template v-if="device != null">
       <form @submit.prevent="save" class="needs-validation" novalidate>
@@ -16,7 +34,7 @@
               help=""
               :disabled="global.disabled || !isNew()"
               @keyup="validateChipId()"
-              :class="chipIdValid ? '' : 'is-invalid'"
+              :error-message="chipIdValid ? '' : 'Please enter a valid chip ID'"
             >
             </BsInputText>
           </div>
@@ -206,7 +224,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { global, deviceStore } from '@/modules/pinia'
 import { validateCurrentForm } from '@/modules/utils'
-import { Device } from '@/modules/deviceStore'
+import { Device } from '@/modules/classes'
 import FermentationStepFragment from '@/fragments/FermentationStepFragment.vue'
 import router from '@/modules/router'
 import { logDebug, logError, logInfo } from '@/modules/logger'
@@ -307,7 +325,7 @@ onMounted(async () => {
 function validateChipId() {
   logDebug('DeviceView.validateChipId()')
 
-  const regex = new RegExp(/^([0-9,a-f]){6}$/)
+  const regex = new RegExp(/^[0-9a-f]{6}$/)
 
   if (regex.test(device.value.chipId)) {
     chipIdValid.value = true
@@ -334,7 +352,7 @@ async function fetchConfigFromDevice() {
   global.disabled = false
 }
 
-// Fetch config from a device with API V1.x that uses /api/auth and /api/config (with auth)
+
 async function fetchConfigEspFwkV1() {
   try {
     var data = {}

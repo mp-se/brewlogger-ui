@@ -1,3 +1,23 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
     <p></p>
@@ -100,6 +120,7 @@
                 </a>
               </div>
             </th>
+            <th scope="col" class="col-sm-1">Velocity</th>
             <th scope="col" class="col-sm-1">Temp ({{ config.isTempC ? 'C' : 'F' }})</th>
             <th scope="col" class="col-sm-1">
               <div :class="sortedClass('battery')">
@@ -138,16 +159,11 @@
               }}
             </td>
             <td class="fs-5">{{ new Number(g.angle).toFixed(2) }}</td>
-            <td class="fs-5">
-              {{
-                config.isTempC
-                  ? new Number(g.temperature).toFixed(2)
-                  : new Number(tempToF(g.temperature)).toFixed(2)
-              }}
-            </td>
+            <td class="fs-5">{{ new Number(g.velocity).toFixed(3) }}</td>
+            <td class="fs-5">{{ getFormattedTemperature(g.temperature) }}</td>
             <td class="fs-5">{{ new Number(g.battery).toFixed(2) }}</td>
             <td class="fs-5">{{ g.rssi }}</td>
-            <td class="fs-5">{{ new Number(g.runTime).toFixed(2) }}</td>
+            <td class="fs-5">{{ g.runTime !== null ? new Number(g.runTime).toFixed(2) : '--' }}</td>
           </tr>
         </tbody>
       </table>
@@ -168,7 +184,7 @@
 import { onMounted, ref } from 'vue'
 import { config, gravityStore, batchStore, global } from '@/modules/pinia'
 import router from '@/modules/router'
-import { gravityToPlato, tempToF, getGravityDataAnalytics } from '@/modules/utils'
+import { gravityToPlato, getGravityDataAnalytics, getFormattedTemperature } from '@/modules/utils'
 import { logDebug, logError } from '@/modules/logger'
 import {
   sortedIconClass,

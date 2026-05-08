@@ -1,55 +1,72 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
-    <div class="row">
-      <div class="col-md-6">
-        <p></p>
-        <p class="h3">Batch List</p>
+    <BsPageHeader title="Batch List">
+      <div class="row">
+        <div class="col-md-8">
+          <BsSelect
+            v-model="global.batchListFilterDevice"
+            :options="deviceList"
+            label="Device filter"
+            help=""
+            :disabled="global.disabled"
+          >
+          </BsSelect>
+        </div>
+        <div class="col-md-2">
+          <BsInputSwitch
+            v-model="global.batchListFilterActive"
+            label="Active"
+            help=""
+            :disabled="global.disabled"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Show only active batches"
+            aria-label="Show only active batches"
+          >
+          </BsInputSwitch>
+        </div>
+        <div class="col-md-2">
+          <BsInputSwitch
+            v-model="global.batchListFilterData"
+            label="Data"
+            help=""
+            :disabled="global.disabled"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Show only batches with data"
+            aria-label="Show only batches with data"
+          >
+          </BsInputSwitch>
+        </div>
       </div>
-      <div class="col-md-4">
-        <BsSelect
-          v-model="global.batchListFilterDevice"
-          :options="deviceList"
-          label="Device filter"
-          help=""
-          :disabled="global.disabled"
-        >
-        </BsSelect>
-      </div>
-      <div class="col-md-1">
-        <BsInputSwitch
-          v-model="global.batchListFilterActive"
-          label="Active"
-          help=""
-          :disabled="global.disabled"
-          data-bs-toggle="tooltip"
-          data-bs-placement="top"
-          title="Show only active batches"
-          aria-label="Show only active batches"
-        >
-        </BsInputSwitch>
-      </div>
-      <div class="col-md-1">
-        <BsInputSwitch
-          v-model="global.batchListFilterData"
-          label="Data"
-          help=""
-          :disabled="global.disabled"
-          data-bs-toggle="tooltip"
-          data-bs-placement="top"
-          title="Show only batches with data"
-          aria-label="Show only batches with data"
-        >
-        </BsInputSwitch>
-      </div>
-    </div>
+    </BsPageHeader>
 
-    <hr />
     <template v-if="batchList != null">
       <table class="table table-striped">
         <thead>
           <tr>
             <th scope="col" class="col-sm-2">
-              <div :class="sortedClass('name')">
+              <div :class="getSortedClass('name')">
                 Name&nbsp;
                 <a class="icon-link icon-link-hover" @click="sortList(batchList, 'name', 'str')">
                   <i :class="sortedIconClass"></i>
@@ -57,7 +74,7 @@
               </div>
             </th>
             <th scope="col" class="col-sm-2">
-              <div :class="sortedClass('brewDate')">
+              <div :class="getSortedClass('brewDate')">
                 Brewdate&nbsp;
                 <a
                   class="icon-link icon-link-hover"
@@ -272,13 +289,16 @@ import { storeToRefs } from 'pinia'
 import router from '@/modules/router'
 import { download } from '@/modules/utils'
 import { logDebug, logError } from '@/modules/logger'
-import {
+import { useSortableList } from '@/modules/useSortableList'
+import BsPageHeader from '@/components/BsPageHeader.vue'
+
+const {
   sortedIconClass,
+  getSortedClass,
   setSortingDefault,
-  sortedClass,
   sortList,
   applySortList
-} from '@/modules/ui'
+} = useSortableList('brewDate', 'date', false)
 
 const confirmDeleteMessage = ref(null)
 const confirmDeleteId = ref(null)
@@ -296,7 +316,6 @@ watch(updatedBatchData, () => {
 
 onMounted(() => {
   logDebug('BatchListView.onMounted()')
-  setSortingDefault('brewDate', 'date', false)
 
   var query = router.currentRoute.value.query
 
@@ -466,7 +485,7 @@ async function exportBatchGravityCSV(id) {
         ',' +
         g.created +
         ',' +
-        g.temperature +
+        (g.temperature !== null ? g.temperature : '') +
         ',' +
         g.gravity +
         ',' +
@@ -476,15 +495,15 @@ async function exportBatchGravityCSV(id) {
         ',' +
         g.rssi +
         ',' +
-        g.corrGravity +
+        (g.corrGravity !== null ? g.corrGravity : '') +
         ',' +
-        g.runTime +
+        (g.runTime !== null ? g.runTime : '') +
         ',' +
-        (g.chamberTemperature === null ? '' : g.chamberTemperature) +
+        (g.chamberTemperature !== null ? g.chamberTemperature : '') +
         ',' +
-        (g.beerTemperature === null ? '' : g.beerTemperature) +
+        (g.beerTemperature !== null ? g.beerTemperature : '') +
         ',' +
-        g.velocity +
+        (g.velocity !== null ? g.velocity : '') +
         '\n'
     })
 
@@ -508,17 +527,17 @@ async function exportBatchPressureCSV(id) {
         ',' +
         g.created +
         ',' +
-        g.temperature +
+        (g.temperature !== null ? g.temperature : '') +
         ',' +
         g.pressure +
         ',' +
-        g.pressure1 +
+        (g.pressure1 !== null ? g.pressure1 : '') +
         ',' +
-        g.battery +
+        (g.battery !== null ? g.battery : '') +
         ',' +
         g.rssi +
         ',' +
-        g.runTime +
+        (g.runTime !== null ? g.runTime : '') +
         '\n'
     })
 

@@ -1,90 +1,26 @@
+// BrewLogger
+// Copyright (c) 2021-2026 Magnus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this software may be used under the terms of a
+// commercial license. See LICENSE_COMMERCIAL for details.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 import { defineStore } from 'pinia'
 import { global } from '@/modules/pinia'
 import { logDebug, logError } from '@/modules/logger'
-
-export class BrewfatherBatch {
-  constructor(brewfatherId, name, brewDate, style, brewer, abv, ebc, ibu, fermentationSteps) {
-    this.name = name === undefined ? '' : name
-    this.brewDate = brewDate === undefined ? '' : brewDate
-    this.style = style === undefined ? '' : style
-    this.brewer = brewer === undefined ? '' : brewer
-    this.abv = abv === undefined ? 0 : abv
-    this.ebc = ebc === undefined ? 0 : ebc
-    this.ibu = ibu === undefined ? 0 : ibu
-    this.brewfatherId = brewfatherId === undefined ? '' : brewfatherId
-    this.fermentationSteps = fermentationSteps === undefined ? '' : fermentationSteps
-  }
-
-  static fromJson(d) {
-    return new BrewfatherBatch(
-      d.brewfatherId,
-      d.name,
-      d.brewDate,
-      d.style,
-      d.brewer,
-      d.abv,
-      d.ebc,
-      d.ibu,
-      d.fermentationSteps
-    )
-  }
-
-  get brewfatherId() {
-    return this._brewfatherId
-  }
-  get name() {
-    return this._name
-  }
-  get brewDate() {
-    return this._brewDate
-  }
-  get style() {
-    return this._style
-  }
-  get brewer() {
-    return this._brewer
-  }
-  get abv() {
-    return this._abv
-  }
-  get ebc() {
-    return this._ebc
-  }
-  get ibu() {
-    return this._ibu
-  }
-  get fermentationSteps() {
-    return this._fermentationSteps
-  }
-
-  set brewfatherId(brewfatherId) {
-    this._brewfatherId = brewfatherId
-  }
-  set name(name) {
-    this._name = name
-  }
-  set brewDate(brewDate) {
-    this._brewDate = brewDate
-  }
-  set style(style) {
-    this._style = style
-  }
-  set brewer(brewer) {
-    this._brewer = brewer
-  }
-  set abv(abv) {
-    this._abv = abv
-  }
-  set ebc(ebc) {
-    this._ebc = ebc
-  }
-  set ibu(ibu) {
-    this._ibu = ibu
-  }
-  set fermentationSteps(fermentationSteps) {
-    this._fermentationSteps = fermentationSteps
-  }
-}
+import { BrewfatherBatch } from '@/modules/classes'
 
 export const useBrewfatherStore = defineStore('brewfatherStore', {
   state: () => {
@@ -120,6 +56,24 @@ export const useBrewfatherStore = defineStore('brewfatherStore', {
           }
         )
         logDebug('brewfatherStore.getBatchList()', res.status)
+        
+        // Handle 424 (Failed Dependency) - Brewfather keys not configured
+        if (res.status === 424) {
+          logDebug('brewfatherStore.getBatchList()', 'Brewfather keys not configured, returning empty array')
+          this.batches = []
+          this.valid = true
+          global.disabled = false
+          
+          // Keep valid for 5 minutes
+          setTimeout(
+            () => {
+              this.valid = false
+            },
+            60 * 5 * 1000
+          )
+          return true
+        }
+        
         if (!res.ok) throw res
         const json = await res.json()
         this.batches = []

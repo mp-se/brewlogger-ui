@@ -1,3 +1,23 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
     <p></p>
@@ -78,20 +98,22 @@ onMounted(async () => {
 })
 
 function filterOutliers(data, limit) {
+  if (!data || data.length === 0) return []
   var count = 0
   var newList = []
 
-  newList.push(data[0])
+  let lastAccepted = data[0]
+  newList.push(lastAccepted)
 
   for (let i = 1; i < data.length; i++) {
-    const p = data[i - 1]
     const g = data[i]
 
-    if (Math.abs(g.gravity - p.gravity) > limit) {
-      logDebug('Current: ' + g.gravity + ' Previous: ' + p.gravity)
+    if (Math.abs(g.gravity - lastAccepted.gravity) > limit) {
+      logDebug('Current: ' + g.gravity + ' Previous Accepted: ' + lastAccepted.gravity)
       count++
     } else {
       newList.push(g)
+      lastAccepted = g
     }
   }
 
@@ -100,6 +122,7 @@ function filterOutliers(data, limit) {
 }
 
 function test(gList, window) {
+  if (!gList || gList.length === 0) return []
   var result = []
 
   const map = new Map()
@@ -125,10 +148,9 @@ function test(gList, window) {
       i++
     })
 
-    // const linearResult = regression.linear(linear.slice(-30), { precision: 12 })
     const linearResult = regression.linear(linear.slice(-window), { precision: 12 })
 
-    result.push({
+    const res = {
       day: day,
       first: linear[0][1],
       last: linear[linear.length - 1][1],
@@ -138,7 +160,8 @@ function test(gList, window) {
       linear: linearResult.string,
       linearFirst: linearResult.predict(0)[1],
       linearLast: linearResult.predict(96)[1]
-    })
+    }
+    result.push(res)
   })
 
   return result

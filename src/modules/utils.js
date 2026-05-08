@@ -1,3 +1,22 @@
+// BrewLogger
+// Copyright (c) 2021-2026 Magnus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this software may be used under the terms of a
+// commercial license. See LICENSE_COMMERCIAL for details.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 import { config } from '@/modules/pinia'
 import { logDebug } from '@/modules/logger'
 
@@ -20,6 +39,10 @@ export const abv = (og, fg) => {
 
 export const gravityToPlato = (sg) => {
   return 259 - 259 / sg
+}
+
+export const platoToGravity = (plato) => {
+  return 259 / (259 - plato)
 }
 
 export function tempToF(c) {
@@ -54,6 +77,83 @@ export function pressureToBAR(p) {
   return p * 0.0689475729
 }
 
+/**
+ * Unified rounding function for consistent decimal formatting across units
+ * @param {number} value - Value to round
+ * @param {number} decimals - Number of decimal places
+ * @returns {number} - Rounded value
+ */
+export function roundValue(value, decimals = 1) {
+  if (value === null || value === undefined) return 0
+  return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals)
+}
+
+export function getFormattedTemperature(temp) {
+  if (temp === null || temp === undefined || temp < -270) {
+    return '--'
+  }
+  if (config.isTempF) {
+    return Number(tempToF(temp)).toFixed(1) + ' °F'
+  }
+  return Number(temp).toFixed(1) + ' °C'
+}
+
+export function getFormattedPressure(pressure) {
+  if (config.isPressurePSI) {
+    return Number(pressure).toFixed(1) + ' PSI'
+  }
+  if (config.isPressureKPA) {
+    return Number(pressureToKPA(pressure)).toFixed(0) + ' kPa'
+  }
+  return Number(pressureToBAR(pressure)).toFixed(2) + ' Bar'
+}
+
+export function getFormattedVolume(volumeLiters) {
+  if (config.isVolumeUs) {
+    return Number(volumeLtoUSGallon(volumeLiters)).toFixed(2) + ' gal'
+  }
+  if (config.isVolumeUk) {
+    return Number(volumeLtoUKGallon(volumeLiters)).toFixed(2) + ' gal'
+  }
+  return Number(volumeLiters).toFixed(2) + ' L'
+}
+
+export function getFormattedPourVolume(volumeCentiliters) {
+  if (config.isVolumeUs) {
+    return Number(volumeCLtoUSOZ(volumeCentiliters)).toFixed(1) + ' oz'
+  }
+  if (config.isVolumeUk) {
+    return Number(volumeCLtoUKOZ(volumeCentiliters)).toFixed(1) + ' oz'
+  }
+  return Number(volumeCentiliters).toFixed(0) + ' cl'
+}
+
+export function truncateString(str, maxLength) {
+  if (str.length <= maxLength) {
+    return str
+  }
+  return str.substring(0, maxLength) + '...'
+}
+
+export function getTimeSincePosted(created) {
+  const now = new Date()
+  const postDate = new Date(created)
+  const diffMs = now - postDate
+  const diffHours = diffMs / (1000 * 60 * 60)
+  const diffDays = diffHours / 24
+  const diffWeeks = diffDays / 7
+
+  if (diffHours < 1) {
+    return 'just now'
+  } else if (diffHours < 24) {
+    return Math.round(diffHours) + ' h ago'
+  } else if (diffDays < 7) {
+    return Math.round(diffDays) + ' d ago'
+  } else {
+    return Math.round(diffWeeks) + ' w ago'
+  }
+}
+
 export function isValidJson(s) {
   try {
     JSON.stringify(JSON.parse(s))
@@ -77,9 +177,18 @@ export function isValidFormData(s) {
 
 export function download(content, mimeType, filename) {
   const a = document.createElement('a')
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  a.setAttribute('href', url)
+
+  // For text content, use data URL to avoid blob URL mixed content issues
+  if (mimeType.startsWith('text/')) {
+    const dataUrl = `data:${mimeType};charset=utf-8,${encodeURIComponent(content)}`
+    a.setAttribute('href', dataUrl)
+  } else {
+    // For binary content, still use blob URL
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    a.setAttribute('href', url)
+  }
+
   a.setAttribute('download', filename)
   a.click()
 }
@@ -128,7 +237,7 @@ export function getPressureDataAnalytics(pressureList) {
       if (p.pressure < stats.pressure.min) stats.pressure.min = p.pressure
 
       // -273 means invalid temperature or not sensor attached
-      if (p.temperature > -270) {
+      if (p.temperature !== null && p.temperature >= -270) {
         if (p.temperature > stats.temperature.max) stats.temperature.max = p.temperature
         if (p.temperature < stats.temperature.min) stats.temperature.min = p.temperature
       }
@@ -233,8 +342,10 @@ export function getGravityDataAnalytics(gravityList) {
       if (g.gravity > stats.gravity.max) stats.gravity.max = g.gravity
       if (g.gravity < stats.gravity.min) stats.gravity.min = g.gravity
 
-      if (g.temperature > stats.temperature.max) stats.temperature.max = g.temperature
-      if (g.temperature < stats.temperature.min) stats.temperature.min = g.temperature
+      if (g.temperature !== null) {
+        if (g.temperature > stats.temperature.max) stats.temperature.max = g.temperature
+        if (g.temperature < stats.temperature.min) stats.temperature.min = g.temperature
+      }
     }
   })
 

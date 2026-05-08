@@ -1,87 +1,64 @@
+// BrewLogger
+// Copyright (c) 2021-2026 Magnus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this software may be used under the terms of a
+// commercial license. See LICENSE_COMMERCIAL for details.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 import { defineStore } from 'pinia'
 import { global } from '@/modules/pinia'
 import { logDebug, logError } from '@/modules/logger'
-
-export class Pour {
-  constructor(id, pour, volume, maxVolume, created, batchId, active) {
-    this.id = id === undefined ? 0 : id
-    this.pour = pour === undefined ? 0.0 : pour
-    this.volume = volume === undefined ? 0.0 : volume
-    this.maxVolume = maxVolume === undefined ? 0.0 : maxVolume
-    this.created = created === undefined ? '' : created
-    this.batchId = batchId === undefined ? 0 : batchId
-    this.active = active === undefined ? true : active
-  }
-
-  static fromJson(p) {
-    return new Pour(p.id, p.pour, p.volume, p.maxVolume, p.created, p.batchId, p.active)
-  }
-
-  toJson() {
-    var j = {
-      // "id": this.id,
-      //"batchId": this.batchId,
-      pour: this.pour,
-      volume: this.volume,
-      maxVolume: this.maxVolume,
-      created: this.created,
-      active: this.active,
-      batchId: this.batchId
-    }
-
-    return j
-  }
-
-  get id() {
-    return this._id
-  }
-  get pour() {
-    return this._pour
-  }
-  get volume() {
-    return this._volume
-  }
-  get maxVolume() {
-    return this._maxVolume
-  }
-  get created() {
-    return this._created
-  }
-  get batchId() {
-    return this._batchId
-  }
-  get active() {
-    return this._active
-  }
-
-  set id(id) {
-    this._id = id
-  }
-  set pour(pour) {
-    this._pour = pour
-  }
-  set volume(volume) {
-    this._volume = volume
-  }
-  set maxVolume(maxVolume) {
-    this._maxVolume = maxVolume
-  }
-  set created(created) {
-    this._created = created
-  }
-  set batchId(batchId) {
-    this._batchId = batchId
-  }
-  set active(active) {
-    this._active = active
-  }
-}
+import { Pour } from '@/modules/classes'
 
 export const usePourStore = defineStore('pourStore', {
   state: () => {
     return { pour: [] }
   },
   actions: {
+    async getLatestPour(limit) {
+      // returns pour[] or null
+
+      logDebug('pourStore.getLatestPour()', `limit=${limit}`)
+      global.disabled = true
+      try {
+        const url = new URL(global.baseURL + 'api/pour/latest')
+        url.searchParams.append('limit', limit)
+        const res = await fetch(url.toString(), {
+          method: 'GET',
+          headers: { Authorization: global.token },
+          signal: AbortSignal.timeout(global.fetchTimout)
+        })
+        logDebug('pourStore.getLatestPour()', res.status)
+        if (!res.ok) throw res
+        const json = await res.json()
+        this.pour = []
+
+        json.forEach((p) => {
+          var pour = Pour.fromJson(p)
+          pour.batchName = p.batchName
+          this.pour.push(pour)
+        })
+
+        global.disabled = false
+        return this.pour
+      } catch (err) {
+        global.disabled = false
+        logError('pourStore.getLatestPour()', err)
+        return null
+      }
+    },
     async getPourListForBatch(id) {
       // returns pour[] or null
 

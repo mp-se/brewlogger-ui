@@ -1,3 +1,23 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <div class="container">
     <p></p>
@@ -25,9 +45,28 @@
     <div class="row" v-if="activeFermentationSteps != null && activeFermentationSteps.length > 0">
       <div class="col-md-12">
         <p class="h4">Active Fermentation Steps</p>
-        <FermentationStepFragment
-          :fermentationSteps="activeFermentationSteps"
-        ></FermentationStepFragment>
+        <table class="table table-striped" v-if="activeFermentationSteps.length > 0">
+          <thead>
+            <tr>
+              <th scope="col" class="col-1">Step</th>
+              <th scope="col" class="col-2">Type</th>
+              <th scope="col" class="col-1">Control</th>
+              <th scope="col" class="col-1">Temp</th>
+              <th scope="col" class="col-1">Days</th>
+              <th scope="col" class="col-3">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(step, index) in activeFermentationSteps" :key="index">
+              <td>{{ step.order + 1 }}</td>
+              <td>{{ step.type }}</td>
+              <td>{{ step.control }}</td>
+              <td>{{ config.isTempF ? tempToF(step.temp).toFixed(1) : step.temp }}°{{ config.tempUnit }}</td>
+              <td>{{ step.days }}</td>
+              <td>{{ step.date }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -42,7 +81,28 @@
           alert="warning"
         />
 
-        <FermentationStepFragment :fermentationSteps="fermentationSteps"></FermentationStepFragment>
+        <table class="table table-striped" v-if="fermentationSteps.length > 0">
+          <thead>
+            <tr>
+              <th scope="col" class="col-1">Step</th>
+              <th scope="col" class="col-2">Type</th>
+              <th scope="col" class="col-1">Control</th>
+              <th scope="col" class="col-1">Temp</th>
+              <th scope="col" class="col-1">Days</th>
+              <th scope="col" class="col-3">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(step, index) in fermentationSteps" :key="index">
+              <td>{{ step.order + 1 }}</td>
+              <td>{{ step.type }}</td>
+              <td>{{ step.control }}</td>
+              <td>{{ config.isTempF ? tempToF(step.temp).toFixed(1) : step.temp }}°{{ config.tempUnit }}</td>
+              <td>{{ step.days }}</td>
+              <td>{{ step.date }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -71,9 +131,9 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { batchStore, deviceStore, global } from '@/modules/pinia'
-import { FermentationStep } from '@/modules/deviceStore'
-import FermentationStepFragment from '@/fragments/FermentationStepFragment.vue'
+import { batchStore, deviceStore, global, config } from '@/modules/pinia'
+import { FermentationStep } from '@/modules/classes'
+import { tempToF } from '@/modules/utils'
 import router from '@/modules/router'
 import { logDebug, logInfo, logError } from '@/modules/logger'
 

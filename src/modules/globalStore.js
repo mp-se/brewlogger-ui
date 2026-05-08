@@ -1,3 +1,22 @@
+// BrewLogger
+// Copyright (c) 2021-2026 Magnus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this software may be used under the terms of a
+// commercial license. See LICENSE_COMMERCIAL for details.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
 import { defineStore } from 'pinia'
 import { logDebug, logInfo } from '@/modules/logger'
 
@@ -54,8 +73,8 @@ export const useGlobalStore = defineStore('global', {
       if (this.url !== undefined) return this.url
 
       if (import.meta.env.VITE_APP_HOST === undefined) {
-        logInfo('configStore:baseURL()', 'Using base URL from env', window.location.href)
-        this.url = window.location.href
+        logInfo('configStore:baseURL()', 'Using base URL from env', window.location.origin + '/')
+        this.url = window.location.origin + '/'
       } else {
         logInfo('configStore:baseURL()', 'Using base URL from env', import.meta.env.VITE_APP_HOST)
         this.url = import.meta.env.VITE_APP_HOST

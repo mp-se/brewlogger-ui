@@ -1,3 +1,23 @@
+<!--
+BrewLogger
+Copyright (c) 2021-2026 Magnus
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Alternatively, this software may be used under the terms of a
+commercial license. See LICENSE_COMMERCIAL for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <template>
   <dialog id="spinner" class="loading">
     <div class="container text-center">
@@ -60,7 +80,7 @@
   <BsFooter
     v-if="global.initialized"
     :text="
-      '(c) 2023-2025 Magnus Persson, ui version ' + global.uiVersion + ' (' + global.uiBuild + ')'
+      '(c) 2023-2026 Magnus Persson, ui version ' + global.uiVersion + ' (' + global.uiBuild + ')'
     "
   />
 </template>
@@ -126,8 +146,20 @@ watch(disabled, () => {
 })
 
 function connect() {
-  var host = global.baseURL.replaceAll('http://', 'ws://')
-  socket.value = new WebSocket(host + 'api/system/notify')
+  const apiKey = global.token
+
+  if (!apiKey) {
+    logInfo('App.connect()', 'No API key found, WebSocket connection skipped')
+    return
+  }
+
+  // Strip 'bearer ' prefix if present
+  const keyOnly = apiKey.replace(/^bearer\s+/i, '')
+
+  var host = global.baseURL.replaceAll('https://', 'wss://').replaceAll('http://', 'ws://')
+  var wsUrl = host + 'api/system/notify?apiKey=' + encodeURIComponent(keyOnly)
+  logInfo('App.connect()', 'WebSocket URL: ' + wsUrl)
+  socket.value = new WebSocket(wsUrl)
 
   socket.value.onopen = function () {
     logInfo('App.connect()', 'Established webocket with server for notifications.')
@@ -149,12 +181,23 @@ function connect() {
     }
   }
 
-  socket.value.onclose = function () {
+  socket.value.onerror = function (event) {
+    logInfo('App.connect()', 'WebSocket error: ' + event)
+    logInfo('App.connect()', 'WebSocket URL: ' + wsUrl)
+    logInfo('App.connect()', 'WebSocket readyState: ' + socket.value.readyState)
+  }
+
+  socket.value.onclose = function (event) {
+    if (event.code === 1008) {
+      logInfo('App.connect()', 'WebSocket authentication failed: ' + event.reason)
+      // Don't retry if auth failed
+      return
+    }
     logInfo('App.connect()', 'Disconnected webocket from server, retry connection.')
     socket.value = null
     setTimeout(() => {
       connect()
-    }, 100)
+    }, 3000)
   }
 }
 
@@ -213,7 +256,7 @@ onMounted(async () => {
         if (batchSuccess) {
           global.initialized = true
           hideSpinner()
-
+          connect()
           test()
         } else {
           global.messageError = 'Failed to load list of batches'
@@ -227,11 +270,9 @@ onMounted(async () => {
       global.messageError = 'Failed to load configuration'
       hideSpinner()
     }
-  }
-
-  setTimeout(() => {
+  } else {
     connect()
-  }, 100)
+  }
 })
 
 function showSpinner() {
